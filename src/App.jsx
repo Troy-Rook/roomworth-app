@@ -1123,7 +1123,8 @@ function AddRoomModal({ onAdd, onClose }) {
 // SCREEN 4 — AI SCANNER
 // ─────────────────────────────────────────────────────────────────────────────
 function ScannerScreen({ user, targetRoom, properties, onBack, onItemScanned, onNavigate }) {
-  const [apiKey, setApiKey]     = useState("");
+  // API key is now handled server-side
+  const [apiKey] = useState("server");
   const [showKey, setShowKey]   = useState(false);
   const [previewSrc, setPreview]= useState(null);
   const [itemName, setItemName] = useState("");
@@ -1201,14 +1202,13 @@ function ScannerScreen({ user, targetRoom, properties, onBack, onItemScanned, on
     setLoading(true); setError(null); setResult(null);
     try {
       const imageBlock = { type:"image", source:{ type:"base64", media_type:imageMime, data:imageB64 } };
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json", "x-api-key":apiKey.trim(), "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access":"true" },
+      const res = await fetch("/api/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model:"claude-sonnet-4-20250514", max_tokens:1024,
-          messages:[{ role:"user", content:[
-            imageBlock,
-            { type:"text", text:`You are an expert UK home contents insurance valuer for a High Net Worth insurance broker.
+          messages: [{ role: "user", content: [
+            { type: "image", source: { type: "base64", media_type: imageMime, data: imageB64 } },
+            { type: "text", text: `You are an expert UK home contents insurance valuer for a High Net Worth insurance broker.
 
 Analyse this image. The user says this item is: "${itemName}" (quantity: ${quantity})
 
@@ -1216,7 +1216,7 @@ Estimate the UK new replacement cost. Use current UK retail prices. Multiply all
 Set specialist_flag to true ONLY for: jewellery, watches, fine art, antiques, rare collectibles.
 confidence is an integer from 0 to 100.
 
-YOU MUST respond with ONLY the following JSON object and absolutely nothing else — no explanation, no markdown, no backticks:
+YOU MUST respond with ONLY the following JSON object and absolutely nothing else:
 {"name":"item name","description":"brief description","low_value":0,"mid_value":0,"high_value":0,"specialist_flag":false,"specialist_reason":"","confidence":85}` }
           ]}]
         })
@@ -1308,26 +1308,7 @@ YOU MUST respond with ONLY the following JSON object and absolutely nothing else
       <AppHeader title="AI Scanner" subtitle={targetRoom?`Scanning for ${targetRoom.name}`:"Contents Estimator"} onBack={onBack} />
       <div style={{ maxWidth:500, margin:"0 auto", padding:"18px 14px" }}>
 
-        {/* API Key - collapsible once set */}
-        {!apiKey ? (
-          <div style={{ background:"linear-gradient(135deg,#1B3A6B,#1e4d8c)", borderRadius:18, padding:"16px", marginBottom:13 }}>
-            <label style={{ color:"rgba(255,255,255,0.6)", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:8 }}>🔑 Claude API Key (required)</label>
-            <div style={{ display:"flex", gap:7 }}>
-              <input type={showKey?"text":"password"} value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="sk-ant-api03-..."
-                style={{ flex:1, background:"rgba(255,255,255,0.1)", border:"1.5px solid rgba(255,255,255,0.15)", borderRadius:11, padding:"11px 13px", color:"white", fontSize:13, outline:"none", fontFamily:"monospace" }} />
-              <button onClick={()=>setShowKey(!showKey)} style={{ background:"rgba(255,255,255,0.1)", border:"1.5px solid rgba(255,255,255,0.15)", borderRadius:11, width:42, color:"rgba(255,255,255,0.8)", cursor:"pointer", fontSize:15, display:"flex", alignItems:"center", justifyContent:"center" }}>{showKey?"🙈":"👁"}</button>
-            </div>
-            <div style={{ color:"rgba(255,255,255,0.5)", fontSize:11, marginTop:6 }}>Enter your Claude API key to enable AI scanning</div>
-          </div>
-        ) : (
-          <div style={{ background:"#ecfdf5", border:"1.5px solid #6ee7b7", borderRadius:14, padding:"10px 14px", marginBottom:13, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ fontSize:16 }}>✅</span>
-              <span style={{ color:"#059669", fontWeight:700, fontSize:13 }}>API key ready</span>
-            </div>
-            <button onClick={()=>setApiKey("")} style={{ background:"none", border:"none", color:"#94a3b8", fontSize:12, cursor:"pointer", fontWeight:600 }}>Change</button>
-          </div>
-        )}
+        {/* API key handled server-side - no UI needed */}
 
         {/* Image */}
         {!result && (
