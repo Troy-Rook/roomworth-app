@@ -1903,11 +1903,42 @@ export default function RoomWorthApp() {
 
   const handleScanItem = (room) => { setScanTargetRoom(room); setScreen("scanner"); };
 
-  const handleItemScanned = (roomId, item) => {
+  const handleItemScanned = async (roomId, item) => {
     if (!activeProperty) return;
     const updatedRooms = activeProperty.rooms.map(r => r.id===roomId ? {...r, items:[...r.items, item]} : r);
-    const updated = { ...activeProperty, rooms: updatedRooms, currentContents: updatedRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+i.value*i.qty,0),0) };
+    const updated = { ...activeProperty, rooms: updatedRooms, currentContents: updatedRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0) };
     handleUpdateProperty(updated);
+    // Save item to Supabase - look up the room by name to get its DB id
+    if (user?.id) {
+      try {
+        const targetRoom = activeProperty.rooms.find(r => r.id === roomId);
+        if (targetRoom) {
+          const { data: dbRoom } = await supabase
+            .from("rooms")
+            .select("id")
+            .eq("name", targetRoom.name)
+            .limit(1)
+            .single();
+          if (dbRoom) {
+            await supabase.from("items").insert({
+              room_id: dbRoom.id,
+              name: item.name,
+              description: item.description,
+              qty: item.qty,
+              value: item.value,
+              override_value: item.override_value || null,
+              low_value: item.low_value,
+              high_value: item.high_value,
+              confidence: item.confidence,
+              specialist: item.specialist || false,
+              specialist_reason: item.specialist_reason || null,
+              image: item.image || null,
+              is_misc: item.isMisc || false
+            });
+          }
+        }
+      } catch(e) { console.error("Save item error:", e); }
+    }
   };
 
   const handleViewReport = (type, prop) => { setReportConfig({type, property:prop}); setScreen("report"); };
