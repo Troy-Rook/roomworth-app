@@ -1908,7 +1908,7 @@ export default function RoomWorthApp() {
     const updatedRooms = activeProperty.rooms.map(r => r.id===roomId ? {...r, items:[...r.items, item]} : r);
     const updated = { ...activeProperty, rooms: updatedRooms, currentContents: updatedRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0) };
     handleUpdateProperty(updated);
-    // Save item to Supabase - look up the room by name to get its DB id
+    // Save item to Supabase - look up the room by name AND property to get its DB id
     if (user?.id) {
       try {
         const targetRoom = activeProperty.rooms.find(r => r.id === roomId);
@@ -1917,6 +1917,7 @@ export default function RoomWorthApp() {
             .from("rooms")
             .select("id")
             .eq("name", targetRoom.name)
+            .eq("property_id", activeProperty.id)
             .limit(1)
             .single();
           if (dbRoom) {
