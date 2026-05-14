@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { supabase } from "./supabase";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOGO
@@ -486,7 +487,32 @@ function PropertiesScreen({ user, properties, setProperties, onViewProperty, onN
   const totalItems      = properties.reduce((s,p)=>s+p.rooms.reduce((rs,r)=>rs+r.items.length,0),0);
   const overallPct      = totalRecommended>0 ? Math.min(100,Math.round((totalContents/totalRecommended)*100)) : 0;
 
-  const saveProperty = (prop) => {
+  const saveProperty = async (prop) => {
+    const isNew = !properties.find(p => p.id === prop.id);
+    if (isNew && user?.id) {
+      try {
+        const { data } = await supabase.from("properties").insert({
+          user_id: user.id,
+          name: prop.name,
+          address: prop.address,
+          type: prop.type,
+          rebuild_value: prop.rebuildValue,
+          recommended_contents: prop.recommendedContents
+        }).select().single();
+        if (data) {
+          // Insert default rooms
+          const roomsWithIds = await Promise.all(prop.rooms.map(async (r) => {
+            const { data: rData } = await supabase.from("rooms").insert({
+              property_id: data.id, name: r.name, type: r.type, color: r.color
+            }).select().single();
+            return { ...r, id: rData?.id || r.id };
+          }));
+          const savedProp = { ...prop, id: data.id, rooms: roomsWithIds };
+          setProperties(prev => [...prev, savedProp]);
+          return;
+        }
+      } catch(e) { console.error("Save new property error:", e); }
+    }
     setProperties(prev => prev.find(p=>p.id===prop.id) ? prev.map(p=>p.id===prop.id?prop:p) : [...prev,prop]);
   };
 
@@ -1738,15 +1764,141 @@ export default function RoomWorthApp() {
   const [scanTargetRoom, setScanTargetRoom] = useState(null);
   const [reportConfig, setReportConfig]     = useState(null);
   const [activeTab, setActiveTab]     = useState("properties");
+  const [dbLoading, setDbLoading]     = useState(false);
 
-  const handleLogin = (userData) => { setUser(userData); setScreen("properties"); setActiveTab("properties"); };
+  // ── Supabase: load properties when user logs in ──
+  useEffect(() => {
+    if (!user?.id) return;
+    loadProperties(user.id);
+  }, [user]);
+
+  const loadProperties = async (userId) => {
+    setDbLoading(true);
+    try {
+      const { data: props, error } = await supabase
+        .from("properties")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+
+      // Load rooms and items for each property
+      const fullProps = await Promise.all((props || []).map(async (p) => {
+        const { data: rooms } = await supabase
+          .from("rooms").select("*").eq("property_id", p.id).order("created_at", { ascending: true });
+        const fullRooms = await Promise.all((rooms || []).map(async (r) => {
+          const { data: items } = await supabase
+            .from("items").select("*").eq("room_id", r.id).order("created_at", { ascending: true });
+          return { ...r, items: items || [] };
+        }));
+        const currentContents = fullRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0);
+        return { ...p, rooms: fullRooms, currentContents, recommendedContents: p.recommended_contents, rebuildValue: p.rebuild_value };
+      }));
+      setProperties(fullProps);
+    } catch(e) { console.error("Load error:", e); }
+    finally { setDbLoading(false); }
+  };
+
+  const handleLogin = async (userData) => {
+    // Try to find or create user in Supabase
+    try {
+      let { data: existing } = await supabase
+        .from("users").select("*").eq("email", userData.email).single();
+      if (!existing) {
+        const { data: newUser } = await supabase.from("users").insert({
+          email: userData.email,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          broker_code: userData.broker?.code || "ROOMWORTH26"
+        }).select().single();
+        existing = newUser;
+      }
+      setUser({ ...userData, id: existing?.id });
+    } catch(e) {
+      // If DB fails, still let them in with local state
+      setUser({ ...userData, id: null });
+    }
+    setScreen("properties"); setActiveTab("properties");
+  };
+
   const handleLogout = () => { setUser(null); setScreen("auth"); setProperties([]); setActiveProperty(null); };
 
-  const handleViewProperty = (prop) => { setActiveProperty(prop); setScreen("rooms"); };
+  // ── Save property to Supabase ──
+  const savePropertyToDb = async (prop, userId) => {
+    try {
+      if (prop.id && prop.id.startsWith("p")) {
+        // New property - insert
+        const { data } = await supabase.from("properties").insert({
+          user_id: userId,
+          name: prop.name,
+          address: prop.address,
+          type: prop.type,
+          rebuild_value: prop.rebuildValue,
+          recommended_contents: prop.recommendedContents
+        }).select().single();
+        if (data) {
+          // Insert default rooms
+          for (const room of prop.rooms) {
+            const { data: rData } = await supabase.from("rooms").insert({
+              property_id: data.id, name: room.name, type: room.type, color: room.color
+            }).select().single();
+            if (rData) room.dbId = rData.id;
+          }
+          return data.id;
+        }
+      } else {
+        // Update existing
+        await supabase.from("properties").update({
+          name: prop.name, address: prop.address, type: prop.type,
+          rebuild_value: prop.rebuildValue, recommended_contents: prop.recommendedContents
+        }).eq("id", prop.id);
+      }
+    } catch(e) { console.error("Save property error:", e); }
+    return null;
+  };
 
-  const handleUpdateProperty = (updated) => {
+  // ── Save item to Supabase ──
+  const saveItemToDb = async (roomId, item) => {
+    try {
+      await supabase.from("items").insert({
+        room_id: roomId,
+        name: item.name,
+        description: item.description,
+        qty: item.qty,
+        value: item.value,
+        override_value: item.override_value,
+        low_value: item.low_value,
+        high_value: item.high_value,
+        confidence: item.confidence,
+        specialist: item.specialist,
+        specialist_reason: item.specialist_reason,
+        image: item.image,
+        is_misc: item.isMisc || false
+      });
+    } catch(e) { console.error("Save item error:", e); }
+  };
+
+  const handleViewProperty = (prop) => {
+    // Get latest version from state
+    const latest = properties.find(p => p.id === prop.id) || prop;
+    setActiveProperty(latest);
+    setScreen("rooms");
+  };
+
+  const handleUpdateProperty = async (updated) => {
     setProperties(prev => prev.map(p => p.id===updated.id ? updated : p));
     setActiveProperty(updated);
+    // Persist to Supabase if we have a real DB id
+    if (updated.id && !updated.id.startsWith("p") && user?.id) {
+      try {
+        await supabase.from("properties").update({
+          name: updated.name,
+          address: updated.address,
+          rebuild_value: updated.rebuildValue,
+          recommended_contents: updated.recommendedContents
+        }).eq("id", updated.id);
+      } catch(e) { console.error("Update property error:", e); }
+    }
   };
 
   const handleScanItem = (room) => { setScanTargetRoom(room); setScreen("scanner"); };
