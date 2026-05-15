@@ -749,12 +749,50 @@ function RoomsScreen({ property, onUpdateProperty, onBack, onScanItem, onViewRep
 
   const updateRooms = (rooms) => onUpdateProperty({...property, rooms, currentContents: rooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0)});
 
-  const addRoom = (room) => updateRooms([...property.rooms, room]);
-
-  const handleAddMiscItem = (roomId, item) => {
-    updateRooms(property.rooms.map(r => r.id===roomId ? {...r, items:[...r.items, item]} : r));
+  const addRoom = async (room) => {
+    // Save to Supabase first to get the real UUID
+    try {
+      const { data } = await supabase.from("rooms").insert({
+        property_id: property.id,
+        name: room.name,
+        type: room.type,
+        color: room.color
+      }).select().single();
+      // Use the Supabase UUID as the room id
+      const savedRoom = data ? { ...room, id: data.id, items: [] } : room;
+      updateRooms([...property.rooms, savedRoom]);
+    } catch(e) {
+      console.error("Add room error:", e);
+      // Fall back to local state
+      updateRooms([...property.rooms, room]);
+    }
   };
-  const removeRoom = (id) => { updateRooms(property.rooms.filter(r=>r.id!==id)); setDeleteRoom(null); };
+
+  const handleAddMiscItem = async (roomId, item) => {
+    updateRooms(property.rooms.map(r => r.id===roomId ? {...r, items:[...r.items, item]} : r));
+    // Save misc item to Supabase
+    try {
+      await supabase.from("items").insert({
+        room_id: roomId,
+        name: item.name,
+        description: item.description,
+        qty: item.qty,
+        value: item.value,
+        confidence: 100,
+        specialist: false,
+        is_misc: true
+      });
+    } catch(e) { console.error("Save misc item error:", e); }
+  };
+
+  const removeRoom = async (id) => {
+    updateRooms(property.rooms.filter(r=>r.id!==id));
+    setDeleteRoom(null);
+    // Delete from Supabase
+    try {
+      await supabase.from("rooms").delete().eq("id", id);
+    } catch(e) { console.error("Delete room error:", e); }
+  };
 
   const handleOverrideItem = (roomId, itemId, overrideVal) => {
     updateRooms(property.rooms.map(r => r.id===roomId
@@ -1535,7 +1573,7 @@ function ReportViewer({ type, property, onBack }) {
               </div>
             </div>
             <div style={{ color:"white", fontWeight:800, fontSize:20, marginBottom:3 }}>{property.name}</div>
-            <div style={{ color:"rgba(255,255,255,0.6)", fontSize:12, marginBottom:14 }}>{property.address}</div>
+            <div style={{ color:"rgba(255,255,255,0.85)", fontSize:12, marginBottom:14 }}>{property.address}</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:8 }}>
               {[{label:"Rebuild",value:fmt(property.rebuildValue),icon:"building"},{label:"Contents",value:fmt(totalContents),icon:"rooms"},{label:"Recommended",value:fmt(property.recommendedContents),icon:"report"},{label:"Coverage",value:`${pct}%`,icon:"list"}].map(({label,value,icon})=>(
                 <div key={label} style={{ background:"rgba(255,255,255,0.1)", borderRadius:11, padding:"9px 5px", textAlign:"center" }}>
@@ -1631,7 +1669,7 @@ function ReportViewer({ type, property, onBack }) {
                         {item.specialist && <span style={{ background:"#7c3aed", color:"white", fontSize:8, fontWeight:800, borderRadius:4, padding:"1px 5px" }}>SPEC</span>}
                         {item.qty>1 && <span style={{ color:"#94a3b8", fontSize:11 }}>×{item.qty}</span>}
                       </div>
-                      <div style={{ color:"#94a3b8", fontSize:11, marginTop:1 }}>{item.description}</div>
+                      <div style={{ color:"#475569", fontSize:11, marginTop:1 }}>{item.description}</div>
                       <div style={{ color:"#64748b", fontSize:10, marginTop:1 }}>Confidence: {item.confidence}%</div>
                     </div>
                     <div style={{ textAlign:"right", flexShrink:0 }}>
@@ -1666,7 +1704,7 @@ function ReportViewer({ type, property, onBack }) {
                       <span style={{ color:"#1B3A6B", fontWeight:700, fontSize:12 }}>{item.name}</span>
                       {item.specialist && <span style={{ background:"#7c3aed", color:"white", fontSize:8, fontWeight:800, borderRadius:4, padding:"1px 4px" }}>SPEC</span>}
                     </div>
-                    <div style={{ color:"#94a3b8", fontSize:10, marginTop:1 }}>{item.description}</div>
+                    <div style={{ color:"#475569", fontSize:10, marginTop:1 }}>{item.description}</div>
                   </div>
                 </div>
                 <div><span style={{ background:`${item.roomColor}15`, color:item.roomColor, fontSize:9, fontWeight:700, borderRadius:5, padding:"2px 6px" }}>{item.room}</span></div>
@@ -1695,13 +1733,13 @@ function ReportViewer({ type, property, onBack }) {
         {/* Disclaimer */}
         <div style={{ background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:14, padding:"14px 16px", marginBottom:14 }}>
           <div style={{ color:"#1B3A6B", fontWeight:700, fontSize:12, marginBottom:4 }}>Important Disclaimer</div>
-          <div style={{ color:"#64748b", fontSize:11, lineHeight:1.7 }}>This report has been generated using AI-assisted image analysis to provide estimated UK new replacement values. All valuations are estimates only and should be reviewed by a qualified insurance professional. Room Worth Limited accepts no liability for any under or over-insurance arising from the use of this report.</div>
+          <div style={{ color:"#374151", fontSize:11, lineHeight:1.7 }}>This report has been generated using AI-assisted image analysis to provide estimated UK new replacement values. All valuations are estimates only and should be reviewed by a qualified insurance professional. Room Worth Limited accepts no liability for any under or over-insurance arising from the use of this report.</div>
         </div>
 
         {/* Footer */}
         <div style={{ textAlign:"center", padding:"14px 0" }}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:9, marginBottom:6 }}><Logo size={24}/><div style={{ color:"#1B3A6B", fontWeight:800, fontSize:13 }}>ROOM WORTH</div></div>
-          <div style={{ color:"#94a3b8", fontSize:11, lineHeight:1.6 }}>hello@roomworth.co.uk · www.roomworth.co.uk<br/>Generated {date} · Ref: {reportRef}<br/>© {new Date().getFullYear()} Room Worth Limited</div>
+          <div style={{ color:"#64748b", fontSize:11, lineHeight:1.6 }}>hello@roomworth.co.uk · www.roomworth.co.uk<br/>Generated {date} · Ref: {reportRef}<br/>© {new Date().getFullYear()} Room Worth Limited</div>
         </div>
       </div>
     </div>
@@ -1789,10 +1827,11 @@ export default function RoomWorthApp() {
         const fullRooms = await Promise.all((rooms || []).map(async (r) => {
           const { data: items } = await supabase
             .from("items").select("*").eq("room_id", r.id).order("created_at", { ascending: true });
-          return { ...r, items: items || [] };
+          // Use Supabase UUID as the room id so scanned items can be saved correctly
+          return { ...r, id: r.id, items: (items || []).map(i => ({...i, qty: i.qty||1, value: i.value||0})) };
         }));
         const currentContents = fullRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0);
-        return { ...p, rooms: fullRooms, currentContents, recommendedContents: p.recommended_contents, rebuildValue: p.rebuild_value };
+        return { ...p, id: p.id, rooms: fullRooms, currentContents, recommendedContents: p.recommended_contents, rebuildValue: p.rebuild_value };
       }));
       setProperties(fullProps);
     } catch(e) { console.error("Load error:", e); }
@@ -1908,36 +1947,26 @@ export default function RoomWorthApp() {
     const updatedRooms = activeProperty.rooms.map(r => r.id===roomId ? {...r, items:[...r.items, item]} : r);
     const updated = { ...activeProperty, rooms: updatedRooms, currentContents: updatedRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0) };
     handleUpdateProperty(updated);
-    // Save item to Supabase - look up the room by name AND property to get its DB id
-    if (user?.id) {
+    // Save item to Supabase using the room id directly (Supabase UUID after loadProperties)
+    if (user?.id && roomId) {
       try {
-        const targetRoom = activeProperty.rooms.find(r => r.id === roomId);
-        if (targetRoom) {
-          const { data: dbRoom } = await supabase
-            .from("rooms")
-            .select("id")
-            .eq("name", targetRoom.name)
-            .eq("property_id", activeProperty.id)
-            .limit(1)
-            .single();
-          if (dbRoom) {
-            await supabase.from("items").insert({
-              room_id: dbRoom.id,
-              name: item.name,
-              description: item.description,
-              qty: item.qty,
-              value: item.value,
-              override_value: item.override_value || null,
-              low_value: item.low_value,
-              high_value: item.high_value,
-              confidence: item.confidence,
-              specialist: item.specialist || false,
-              specialist_reason: item.specialist_reason || null,
-              image: item.image || null,
-              is_misc: item.isMisc || false
-            });
-          }
-        }
+        const { error } = await supabase.from("items").insert({
+          room_id: roomId,
+          name: item.name,
+          description: item.description,
+          qty: item.qty,
+          value: item.value,
+          override_value: item.override_value || null,
+          low_value: item.low_value,
+          high_value: item.high_value,
+          confidence: item.confidence,
+          specialist: item.specialist || false,
+          specialist_reason: item.specialist_reason || null,
+          image: item.image || null,
+          is_misc: item.isMisc || false
+        });
+        if (error) console.error("Insert item error:", error);
+        else console.log("Item saved to Supabase!");
       } catch(e) { console.error("Save item error:", e); }
     }
   };
