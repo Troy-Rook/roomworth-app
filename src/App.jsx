@@ -358,8 +358,7 @@ function AuthScreen({ onLogin }) {
   const handleLogin = async () => {
     if (!email.trim()||!password.trim()) return;
     setLoading(true);
-    setTimeout(() => {
-      // Get name from DB
+    try {
       const { data: dbUser } = await supabase.from("users").select("first_name,last_name,broker_code").eq("email", email.trim()).single();
       const brokerCode = dbUser?.broker_code || "ROOMWORTH26";
       onLogin({ 
@@ -368,8 +367,10 @@ function AuthScreen({ onLogin }) {
         email: email.trim(), 
         broker: BROKER_CODES[brokerCode] || BROKER_CODES["ROOMWORTH26"]
       });
-      setLoading(false);
-    }, 1200);
+    } catch(e) {
+      onLogin({ firstName: email.trim().split("@")[0], lastName: "", email: email.trim(), broker: BROKER_CODES["ROOMWORTH26"] });
+    }
+    setLoading(false);
   };
 
   return (
