@@ -1569,9 +1569,9 @@ function ReportViewer({ type, property, onBack }) {
               <Logo size={44} />
               <div><div style={{ color:"white", fontWeight:900, fontSize:17 }}>ROOM WORTH</div><div style={{ color:"rgba(74,171,191,0.9)", fontSize:12 }}>Contents Estimator</div></div>
               <div style={{ marginLeft:"auto", textAlign:"right" }}>
-                <div style={{ color:"rgba(255,255,255,0.4)", fontSize:10, textTransform:"uppercase", letterSpacing:"0.6px" }}>{type==="broker"?"Broker Report":"Inventory"}</div>
-                <div style={{ color:"white", fontWeight:800, fontSize:12, fontFamily:"monospace" }}>{reportRef}</div>
-                <div style={{ color:"rgba(255,255,255,0.4)", fontSize:10, marginTop:2 }}>{date}</div>
+                <div style={{ color:"rgba(255,255,255,0.85)", fontSize:10, textTransform:"uppercase", letterSpacing:"0.6px" }}>{type==="broker"?"Broker Report":"Inventory"}</div>
+                <div style={{ color:"white", fontWeight:900, fontSize:12, fontFamily:"monospace" }}>{reportRef}</div>
+                <div style={{ color:"rgba(255,255,255,0.85)", fontSize:10, marginTop:2 }}>{date}</div>
               </div>
             </div>
             <div style={{ color:"white", fontWeight:800, fontSize:20, marginBottom:3 }}>{property.name}</div>
@@ -1580,8 +1580,8 @@ function ReportViewer({ type, property, onBack }) {
               {[{label:"Rebuild",value:fmt(property.rebuildValue),icon:"building"},{label:"Contents",value:fmt(totalContents),icon:"rooms"},{label:"Recommended",value:fmt(property.recommendedContents),icon:"report"},{label:"Coverage",value:`${pct}%`,icon:"list"}].map(({label,value,icon})=>(
                 <div key={label} style={{ background:"rgba(255,255,255,0.1)", borderRadius:11, padding:"9px 5px", textAlign:"center" }}>
                   <div style={{ display:"flex", justifyContent:"center", marginBottom:4 }}><SvgIcon name={icon} size={14} color="rgba(255,255,255,0.7)"/></div>
-                  <div style={{ color:"white", fontWeight:800, fontSize:12 }}>{value}</div>
-                  <div style={{ color:"rgba(255,255,255,0.45)", fontSize:9, fontWeight:600, textTransform:"uppercase", marginTop:1 }}>{label}</div>
+                  <div style={{ color:"white", fontWeight:900, fontSize:13 }}>{value}</div>
+                  <div style={{ color:"rgba(255,255,255,0.85)", fontSize:9, fontWeight:700, textTransform:"uppercase", marginTop:1 }}>{label}</div>
                 </div>
               ))}
             </div>
