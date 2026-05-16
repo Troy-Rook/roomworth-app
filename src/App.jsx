@@ -355,7 +355,7 @@ function AuthScreen({ onLogin }) {
     }, 1200);
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email.trim()||!password.trim()) return;
     setLoading(true);
     setTimeout(() => {
