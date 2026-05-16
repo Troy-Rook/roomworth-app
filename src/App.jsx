@@ -751,13 +751,15 @@ function RoomsScreen({ property, onUpdateProperty, onBack, onScanItem, onViewRep
 
   const addRoom = async (room) => {
     // Save to Supabase first to get the real UUID
+    console.log("Adding room to property:", property.id, property.name);
     try {
-      const { data } = await supabase.from("rooms").insert({
+      const { data, error } = await supabase.from("rooms").insert({
         property_id: property.id,
         name: room.name,
         type: room.type,
         color: room.color
       }).select().single();
+      console.log("Room save result:", data, error);
       // Use the Supabase UUID as the room id
       const savedRoom = data ? { ...room, id: data.id, items: [] } : room;
       updateRooms([...property.rooms, savedRoom]);
@@ -1839,11 +1841,12 @@ export default function RoomWorthApp() {
   };
 
   const handleLogin = async (userData) => {
-    // Try to find or create user in Supabase
     try {
       let { data: existing } = await supabase
         .from("users").select("*").eq("email", userData.email).single();
+
       if (!existing) {
+        // New user - create in DB
         const { data: newUser } = await supabase.from("users").insert({
           email: userData.email,
           first_name: userData.firstName,
@@ -1851,10 +1854,18 @@ export default function RoomWorthApp() {
           broker_code: userData.broker?.code || "ROOMWORTH26"
         }).select().single();
         existing = newUser;
+        setUser({ ...userData, id: existing?.id });
+      } else {
+        // Existing user - use their name from DB not the login form
+        setUser({
+          ...userData,
+          id: existing.id,
+          firstName: existing.first_name || userData.firstName,
+          lastName: existing.last_name || userData.lastName,
+        });
       }
-      setUser({ ...userData, id: existing?.id });
     } catch(e) {
-      // If DB fails, still let them in with local state
+      console.error("Login error:", e);
       setUser({ ...userData, id: null });
     }
     setScreen("properties"); setActiveTab("properties");
