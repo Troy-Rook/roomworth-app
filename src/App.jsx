@@ -359,7 +359,15 @@ function AuthScreen({ onLogin }) {
     if (!email.trim()||!password.trim()) return;
     setLoading(true);
     setTimeout(() => {
-      onLogin({ firstName: "My", lastName: "Account", email: email.trim(), broker: BROKER_CODES["ROOMWORTH26"] });
+      // Get name from DB
+      const { data: dbUser } = await supabase.from("users").select("first_name,last_name,broker_code").eq("email", email.trim()).single();
+      const brokerCode = dbUser?.broker_code || "ROOMWORTH26";
+      onLogin({ 
+        firstName: dbUser?.first_name || email.trim().split("@")[0], 
+        lastName: dbUser?.last_name || "", 
+        email: email.trim(), 
+        broker: BROKER_CODES[brokerCode] || BROKER_CODES["ROOMWORTH26"]
+      });
       setLoading(false);
     }, 1200);
   };
@@ -1752,7 +1760,11 @@ function ReportViewer({ type, property, onBack }) {
 // SCREEN 7 — ACCOUNT
 // ─────────────────────────────────────────────────────────────────────────────
 function AccountScreen({ user, onLogout, onNavigate }) {
-  const totalProps = 0;
+  const [subPage, setSubPage] = useState(null);
+  if (subPage==="notifications") return <NotificationsPage user={user} onBack={()=>setSubPage(null)} />;
+  if (subPage==="privacy") return <PrivacyPage user={user} onBack={()=>setSubPage(null)} />;
+  if (subPage==="help") return <HelpPage onBack={()=>setSubPage(null)} />;
+  if (subPage==="terms") return <TermsPage onBack={()=>setSubPage(null)} />;
   return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0f5fb,#e8f1f8)", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif", paddingBottom:80 }}>
       <AppHeader title="Account" subtitle="Your profile & settings" right={<Logo size={36}/>} />
@@ -1760,7 +1772,7 @@ function AccountScreen({ user, onLogout, onNavigate }) {
         <div style={{ background:"linear-gradient(135deg,#1B3A6B,#1e4d8c)", borderRadius:22, padding:"24px", marginBottom:16, textAlign:"center", boxShadow:"0 8px 28px rgba(27,58,107,0.2)" }}>
           <div style={{ width:72, height:72, borderRadius:"50%", background:"linear-gradient(135deg,#4AABBF,#0891b2)", display:"flex", alignItems:"center", justifyContent:"center", color:"white", fontSize:26, fontWeight:800, margin:"0 auto 14px" }}>{user.firstName[0]}{user.lastName[0]}</div>
           <div style={{ color:"white", fontWeight:800, fontSize:20 }}>{user.firstName} {user.lastName}</div>
-          <div style={{ color:"rgba(255,255,255,0.6)", fontSize:13, marginTop:3 }}>{user.email||"james.davies@email.com"}</div>
+          <div style={{ color:"rgba(255,255,255,0.85)", fontSize:13, marginTop:3 }}>{user.email||""}</div>
           {user.broker && (
             <div style={{ display:"inline-flex", alignItems:"center", gap:7, background:"rgba(255,255,255,0.1)", borderRadius:20, padding:"6px 14px", marginTop:12 }}>
               <div style={{ width:7, height:7, borderRadius:"50%", background:user.broker.accent||"#4AABBF" }} />
@@ -1768,23 +1780,21 @@ function AccountScreen({ user, onLogout, onNavigate }) {
             </div>
           )}
         </div>
-
         {[
-          { icon:"bell",    label:"Notifications",       sub:"Manage your alerts" },
-          { icon:"privacy", label:"Privacy & Security",  sub:"Password and data settings" },
-          { icon:"help",    label:"Help & Support",      sub:"FAQs and contact us" },
-          { icon:"terms",   label:"Terms & Privacy Policy", sub:"Legal information" },
-        ].map(({icon,label,sub})=>(
-          <div key={label} style={{ background:"white", borderRadius:16, padding:"14px 16px", marginBottom:9, border:"1px solid #e8eef5", boxShadow:"0 2px 8px rgba(27,58,107,0.05)", display:"flex", alignItems:"center", gap:13, cursor:"pointer" }}>
+          { id:"notifications", icon:"bell",    label:"Notifications",          sub:"Scan alerts and reminders" },
+          { id:"privacy",       icon:"privacy", label:"Privacy & Security",     sub:"Your data and account security" },
+          { id:"help",          icon:"help",    label:"Help & Support",         sub:"FAQs, guides and contact us" },
+          { id:"terms",         icon:"terms",   label:"Terms & Privacy Policy", sub:"Legal information" },
+        ].map(({id,icon,label,sub})=>(
+          <div key={id} onClick={()=>setSubPage(id)} style={{ background:"white", borderRadius:16, padding:"14px 16px", marginBottom:9, border:"1px solid #e8eef5", boxShadow:"0 2px 8px rgba(27,58,107,0.05)", display:"flex", alignItems:"center", gap:13, cursor:"pointer" }}>
             <div style={{ width:38, height:38, borderRadius:11, background:"#f0f5ff", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><SvgIcon name={icon} size={18} color="#1B3A6B"/></div>
             <div style={{ flex:1 }}>
               <div style={{ color:"#1B3A6B", fontWeight:700, fontSize:14 }}>{label}</div>
-              <div style={{ color:"#94a3b8", fontSize:12 }}>{sub}</div>
+              <div style={{ color:"#64748b", fontSize:12 }}>{sub}</div>
             </div>
             <SvgIcon name="chevron_r" size={16} color="#cbd5e1"/>
           </div>
         ))}
-
         <button onClick={onLogout} style={{ width:"100%", background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:16, padding:"15px", color:"#dc2626", fontSize:14, fontWeight:700, cursor:"pointer", marginTop:8, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}><SvgIcon name="signout" size={16} color="#dc2626"/> Sign Out</button>
         <div style={{ textAlign:"center", color:"#94a3b8", fontSize:11, marginTop:16 }}>Room Worth v1.0 · © {new Date().getFullYear()} Room Worth Limited</div>
       </div>
@@ -1793,233 +1803,209 @@ function AccountScreen({ user, onLogout, onNavigate }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ROOT APP — NAVIGATION CONTROLLER
-// ─────────────────────────────────────────────────────────────────────────────
-export default function RoomWorthApp() {
-  const [user, setUser]               = useState(null);
-  const [screen, setScreen]           = useState("auth");
-  const [properties, setProperties]   = useState([]);
-  const [activeProperty, setActiveProperty] = useState(null);
-  const [scanTargetRoom, setScanTargetRoom] = useState(null);
-  const [reportConfig, setReportConfig]     = useState(null);
-  const [activeTab, setActiveTab]     = useState("properties");
-  const [dbLoading, setDbLoading]     = useState(false);
-
-  // ── Supabase: load properties when user logs in ──
-  useEffect(() => {
-    if (!user?.id) return;
-    loadProperties(user.id);
-  }, [user]);
-
-  const loadProperties = async (userId) => {
-    setDbLoading(true);
-    try {
-      const { data: props, error } = await supabase
-        .from("properties")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-
-      // Load rooms and items for each property
-      const fullProps = await Promise.all((props || []).map(async (p) => {
-        const { data: rooms } = await supabase
-          .from("rooms").select("*").eq("property_id", p.id).order("created_at", { ascending: true });
-        const fullRooms = await Promise.all((rooms || []).map(async (r) => {
-          const { data: items } = await supabase
-            .from("items").select("*").eq("room_id", r.id).order("created_at", { ascending: true });
-          // Use Supabase UUID as the room id so scanned items can be saved correctly
-          return { ...r, id: r.id, items: (items || []).map(i => ({...i, qty: i.qty||1, value: i.value||0})) };
-        }));
-        const currentContents = fullRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0);
-        return { ...p, id: p.id, rooms: fullRooms, currentContents, recommendedContents: p.recommended_contents, rebuildValue: p.rebuild_value };
-      }));
-      setProperties(fullProps);
-    } catch(e) { console.error("Load error:", e); }
-    finally { setDbLoading(false); }
-  };
-
-  const handleLogin = async (userData) => {
-    try {
-      let { data: existing } = await supabase
-        .from("users").select("*").eq("email", userData.email).single();
-
-      if (!existing) {
-        // New user - create in DB
-        const { data: newUser } = await supabase.from("users").insert({
-          email: userData.email,
-          first_name: userData.firstName,
-          last_name: userData.lastName,
-          broker_code: userData.broker?.code || "ROOMWORTH26"
-        }).select().single();
-        existing = newUser;
-        setUser({ ...userData, id: existing?.id });
-      } else {
-        // Existing user - use their name from DB not the login form
-        setUser({
-          ...userData,
-          id: existing.id,
-          firstName: existing.first_name || userData.firstName,
-          lastName: existing.last_name || userData.lastName,
-        });
-      }
-    } catch(e) {
-      console.error("Login error:", e);
-      setUser({ ...userData, id: null });
-    }
-    setScreen("properties"); setActiveTab("properties");
-  };
-
-  const handleLogout = () => { setUser(null); setScreen("auth"); setProperties([]); setActiveProperty(null); };
-
-  // ── Save property to Supabase ──
-  const savePropertyToDb = async (prop, userId) => {
-    try {
-      if (prop.id && prop.id.startsWith("p")) {
-        // New property - insert
-        const { data } = await supabase.from("properties").insert({
-          user_id: userId,
-          name: prop.name,
-          address: prop.address,
-          type: prop.type,
-          rebuild_value: prop.rebuildValue,
-          recommended_contents: prop.recommendedContents
-        }).select().single();
-        if (data) {
-          // Insert default rooms
-          for (const room of prop.rooms) {
-            const { data: rData } = await supabase.from("rooms").insert({
-              property_id: data.id, name: room.name, type: room.type, color: room.color
-            }).select().single();
-            if (rData) room.dbId = rData.id;
-          }
-          return data.id;
-        }
-      } else {
-        // Update existing
-        await supabase.from("properties").update({
-          name: prop.name, address: prop.address, type: prop.type,
-          rebuild_value: prop.rebuildValue, recommended_contents: prop.recommendedContents
-        }).eq("id", prop.id);
-      }
-    } catch(e) { console.error("Save property error:", e); }
-    return null;
-  };
-
-  // ── Save item to Supabase ──
-  const saveItemToDb = async (roomId, item) => {
-    try {
-      await supabase.from("items").insert({
-        room_id: roomId,
-        name: item.name,
-        description: item.description,
-        qty: item.qty,
-        value: item.value,
-        override_value: item.override_value,
-        low_value: item.low_value,
-        high_value: item.high_value,
-        confidence: item.confidence,
-        specialist: item.specialist,
-        specialist_reason: item.specialist_reason,
-        image: item.image,
-        is_misc: item.isMisc || false
-      });
-    } catch(e) { console.error("Save item error:", e); }
-  };
-
-  const handleViewProperty = (prop) => {
-    // Get latest version from state
-    const latest = properties.find(p => p.id === prop.id) || prop;
-    setActiveProperty(latest);
-    setScreen("rooms");
-  };
-
-  const handleUpdateProperty = async (updated) => {
-    setProperties(prev => prev.map(p => p.id===updated.id ? updated : p));
-    setActiveProperty(updated);
-    // Persist to Supabase if we have a real DB id
-    if (updated.id && !updated.id.startsWith("p") && user?.id) {
-      try {
-        await supabase.from("properties").update({
-          name: updated.name,
-          address: updated.address,
-          rebuild_value: updated.rebuildValue,
-          recommended_contents: updated.recommendedContents
-        }).eq("id", updated.id);
-      } catch(e) { console.error("Update property error:", e); }
-    }
-  };
-
-  const handleScanItem = (room) => { setScanTargetRoom(room); setScreen("scanner"); };
-
-  const handleItemScanned = async (roomId, item) => {
-    if (!activeProperty) return;
-    const updatedRooms = activeProperty.rooms.map(r => r.id===roomId ? {...r, items:[...r.items, item]} : r);
-    const updated = { ...activeProperty, rooms: updatedRooms, currentContents: updatedRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0) };
-    handleUpdateProperty(updated);
-    // Save item to Supabase using the room id directly (Supabase UUID after loadProperties)
-    if (user?.id && roomId) {
-      try {
-        const { error } = await supabase.from("items").insert({
-          room_id: roomId,
-          name: item.name,
-          description: item.description,
-          qty: item.qty,
-          value: item.value,
-          override_value: item.override_value || null,
-          low_value: item.low_value,
-          high_value: item.high_value,
-          confidence: item.confidence,
-          specialist: item.specialist || false,
-          specialist_reason: item.specialist_reason || null,
-          image: item.image || null,
-          is_misc: item.isMisc || false
-        });
-        if (error) console.error("Insert item error:", error);
-        else console.log("Item saved to Supabase!");
-      } catch(e) { console.error("Save item error:", e); }
-    }
-  };
-
-  const handleViewReport = (type, prop) => { setReportConfig({type, property:prop}); setScreen("report"); };
-
-  const handleNavigate = (tab) => {
-    setActiveTab(tab);
-    if (tab==="properties") setScreen("properties");
-    else if (tab==="scanner") { setScanTargetRoom(null); setScreen("scanner"); }
-    else if (tab==="reports") setScreen("reports");
-    else if (tab==="account") setScreen("account");
-  };
-
-  const handleBack = () => {
-    if (screen==="rooms")   { setScreen("properties"); setActiveTab("properties"); }
-    if (screen==="scanner") { screen==="rooms" ? setScreen("rooms") : activeProperty ? setScreen("rooms") : setScreen("properties"); }
-    if (screen==="report")  { setScreen(activeProperty?"rooms":"reports"); }
-    if (screen==="reports") { setScreen("properties"); setActiveTab("properties"); }
-  };
-
+// ── Notifications Page ────────────────────────────────────────────────────────
+function NotificationsPage({ user, onBack }) {
+  const items = [
+    { icon:"scan",   title:"Scan Complete",     desc:"Get notified when your AI scan is complete.", on:true },
+    { icon:"report", title:"Report Ready",       desc:"Notified when your broker report is generated.", on:true },
+    { icon:"alert",  title:"Coverage Reminders", desc:"Weekly reminder if contents coverage is below minimum.", on:false },
+    { icon:"bell",   title:"New Features",       desc:"Be first to know about new Room Worth features.", on:true },
+  ];
+  const [prefs, setPrefs] = useState(items.map(n=>n.on));
   return (
-    <div style={{ fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif" }}>
-      {screen==="auth"       && <AuthScreen onLogin={handleLogin} />}
-      {screen==="properties" && user && <PropertiesScreen user={user} properties={properties} setProperties={setProperties} onViewProperty={handleViewProperty} onNavigate={handleNavigate} />}
-      {screen==="rooms"      && activeProperty && <RoomsScreen property={activeProperty} onUpdateProperty={handleUpdateProperty} onBack={()=>setScreen("properties")} onScanItem={handleScanItem} onViewReport={handleViewReport} onNavigate={handleNavigate} />}
-      {screen==="scanner"    && <ScannerScreen user={user} targetRoom={scanTargetRoom} properties={properties} onBack={()=>activeProperty?setScreen("rooms"):setScreen("properties")} onItemScanned={handleItemScanned} onNavigate={handleNavigate} />}
-      {screen==="reports"    && <ReportsScreen properties={properties} onViewReport={handleViewReport} onNavigate={handleNavigate} />}
-      {screen==="report"     && reportConfig && <ReportViewer type={reportConfig.type} property={properties.find(p=>p.id===reportConfig.property.id)||activeProperty||reportConfig.property} onBack={()=>setScreen(activeProperty?"rooms":"reports")} />}
-      {screen==="account"    && <AccountScreen user={user} onLogout={handleLogout} onNavigate={handleNavigate} />}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
-        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
-        @keyframes popIn  { from{opacity:0;transform:scale(0.88)}to{opacity:1;transform:scale(1)} }
-        @keyframes spin   { to{transform:rotate(360deg)} }
-        input::placeholder,textarea::placeholder{color:#94a3b8}
-        input:focus,textarea:focus{border-color:#4AABBF!important;box-shadow:0 0 0 3px rgba(74,171,191,0.12)!important;outline:none}
-        button:active{transform:scale(0.97)}
-        *{-webkit-tap-highlight-color:transparent}
-        textarea{font-family:inherit}
-        @media print{.no-print{display:none!important}}
-      `}</style>
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0f5fb,#e8f1f8)", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif", paddingBottom:40 }}>
+      <AppHeader title="Notifications" subtitle="Manage your alerts" onBack={onBack} />
+      <div style={{ maxWidth:500, margin:"0 auto", padding:"20px 14px" }}>
+        <div style={{ background:"linear-gradient(135deg,#1B3A6B,#1e4d8c)", borderRadius:18, padding:"16px 18px", marginBottom:20, display:"flex", gap:12, alignItems:"center" }}>
+          <SvgIcon name="bell" size={24} color="white"/>
+          <div>
+            <div style={{ color:"white", fontWeight:700, fontSize:14 }}>Stay in the loop</div>
+            <div style={{ color:"rgba(255,255,255,0.85)", fontSize:12 }}>Choose what you want to be notified about</div>
+          </div>
+        </div>
+        {items.map((n,i)=>(
+          <div key={i} style={{ background:"white", borderRadius:16, padding:"16px", marginBottom:10, border:"1px solid #e8eef5", boxShadow:"0 2px 8px rgba(27,58,107,0.05)", display:"flex", alignItems:"center", gap:14 }}>
+            <div style={{ width:42, height:42, borderRadius:12, background:"#f0f5ff", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><SvgIcon name={n.icon} size={20} color="#1B3A6B"/></div>
+            <div style={{ flex:1 }}>
+              <div style={{ color:"#1B3A6B", fontWeight:700, fontSize:14 }}>{n.title}</div>
+              <div style={{ color:"#64748b", fontSize:12, marginTop:2, lineHeight:1.4 }}>{n.desc}</div>
+            </div>
+            <div onClick={()=>setPrefs(p=>p.map((v,j)=>j===i?!v:v))} style={{ width:48, height:26, borderRadius:99, background:prefs[i]?"#1B3A6B":"#e2e8f0", cursor:"pointer", position:"relative", transition:"background 0.2s", flexShrink:0 }}>
+              <div style={{ width:20, height:20, borderRadius:"50%", background:"white", position:"absolute", top:3, left:prefs[i]?24:3, transition:"left 0.2s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)" }}/>
+            </div>
+          </div>
+        ))}
+        <div style={{ background:"#f0f9ff", border:"1px solid #bae6fd", borderRadius:14, padding:"14px 16px", marginTop:8 }}>
+          <div style={{ color:"#0369a1", fontSize:12, lineHeight:1.6 }}>💡 Email notifications will be sent to <strong>{user.email}</strong>. Full push notification support coming soon.</div>
+        </div>
+      </div>
     </div>
   );
 }
+
+// ── Privacy & Security Page ───────────────────────────────────────────────────
+function PrivacyPage({ user, onBack }) {
+  const [showDelete, setShowDelete] = useState(false);
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0f5fb,#e8f1f8)", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif", paddingBottom:40 }}>
+      <AppHeader title="Privacy & Security" subtitle="Your data and account security" onBack={onBack} />
+      <div style={{ maxWidth:500, margin:"0 auto", padding:"20px 14px" }}>
+        <div style={{ background:"linear-gradient(135deg,#1B3A6B,#1e4d8c)", borderRadius:18, padding:"18px", marginBottom:16, display:"flex", gap:12, alignItems:"center" }}>
+          <SvgIcon name="privacy" size={28} color="white"/>
+          <div>
+            <div style={{ color:"white", fontWeight:700, fontSize:14 }}>Your data is secure</div>
+            <div style={{ color:"rgba(255,255,255,0.85)", fontSize:12, lineHeight:1.5 }}>All data stored on encrypted EU servers. We never sell your data.</div>
+          </div>
+        </div>
+        <div style={{ background:"white", borderRadius:16, padding:"18px", marginBottom:12, border:"1px solid #e8eef5" }}>
+          <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:15, marginBottom:12 }}>Data We Store</div>
+          {[
+            { label:"Account details", value:"Name, email, broker code" },
+            { label:"Properties", value:"Addresses and rebuild values" },
+            { label:"Room contents", value:"Items, valuations and photos" },
+            { label:"Server location", value:"EU West Ireland — GDPR compliant" },
+          ].map(({label,value})=>(
+            <div key={label} style={{ display:"flex", justifyContent:"space-between", padding:"10px 0", borderBottom:"1px solid #f1f5f9" }}>
+              <span style={{ color:"#64748b", fontSize:13 }}>{label}</span>
+              <span style={{ color:"#1B3A6B", fontSize:13, fontWeight:600, textAlign:"right", maxWidth:"55%" }}>{value}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ background:"white", borderRadius:16, padding:"18px", marginBottom:12, border:"1px solid #e8eef5" }}>
+          <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:15, marginBottom:12 }}>Your Account</div>
+          {[
+            { label:"Email", value:user.email },
+            { label:"Broker", value:user.broker?.broker||"Room Worth Direct" },
+            { label:"Password", value:"Contact support to change" },
+          ].map(({label,value})=>(
+            <div key={label} style={{ display:"flex", justifyContent:"space-between", padding:"10px 0", borderBottom:"1px solid #f1f5f9" }}>
+              <span style={{ color:"#64748b", fontSize:13 }}>{label}</span>
+              <span style={{ color:"#1B3A6B", fontSize:13, fontWeight:600 }}>{value}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ background:"white", borderRadius:16, padding:"18px", marginBottom:12, border:"1px solid #e8eef5" }}>
+          <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:15, marginBottom:8 }}>Your Rights</div>
+          <div style={{ color:"#374151", fontSize:13, lineHeight:1.6, marginBottom:12 }}>Under GDPR you have the right to access, correct or delete your personal data. Contact us at:</div>
+          <div style={{ background:"#f0f9ff", borderRadius:10, padding:"10px 14px", color:"#0369a1", fontWeight:600, fontSize:13 }}>privacy@roomworth.co.uk</div>
+        </div>
+        <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:16, padding:"18px", marginBottom:12 }}>
+          <div style={{ color:"#dc2626", fontWeight:800, fontSize:15, marginBottom:8 }}>Danger Zone</div>
+          <div style={{ color:"#374151", fontSize:13, marginBottom:14, lineHeight:1.5 }}>Deleting your account permanently removes all your data. This cannot be undone.</div>
+          {!showDelete ? (
+            <button onClick={()=>setShowDelete(true)} style={{ background:"white", border:"1.5px solid #fecaca", borderRadius:12, padding:"11px 18px", color:"#dc2626", fontSize:13, fontWeight:700, cursor:"pointer" }}>Request Account Deletion</button>
+          ) : (
+            <div style={{ background:"white", borderRadius:12, padding:"14px" }}>
+              <div style={{ color:"#dc2626", fontWeight:700, fontSize:13, marginBottom:8 }}>Are you sure? This cannot be undone.</div>
+              <div style={{ display:"flex", gap:8 }}>
+                <button onClick={()=>setShowDelete(false)} style={{ flex:1, background:"#f1f5f9", border:"none", borderRadius:10, padding:"11px", color:"#1B3A6B", fontWeight:700, cursor:"pointer" }}>Cancel</button>
+                <button onClick={()=>{ alert("Please email privacy@roomworth.co.uk to complete your deletion request."); setShowDelete(false); }} style={{ flex:1, background:"#dc2626", border:"none", borderRadius:10, padding:"11px", color:"white", fontWeight:700, cursor:"pointer" }}>Delete Account</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Help & Support Page ───────────────────────────────────────────────────────
+function HelpPage({ onBack }) {
+  const [openFaq, setOpenFaq] = useState(null);
+  const faqs = [
+    { q:"How do I scan an item?", a:"Go to any property, select a room and tap '+ Scan'. Take a photo, enter the item name and quantity, then tap 'Scan & Value Item'. Our AI will estimate the UK replacement value in seconds." },
+    { q:"How accurate are the AI valuations?", a:"Our AI uses current UK retail pricing data to estimate new replacement costs. Values are estimates and should be reviewed by your broker before finalising coverage. High confidence scans (75%+) are generally very accurate for standard household items." },
+    { q:"What is a specialist item?", a:"Specialist items include jewellery, watches, fine art, antiques and collectibles that require individual professional valuation. These are flagged automatically and excluded from the estimated total." },
+    { q:"What is the recommended contents value?", a:"We recommend insuring contents for a minimum of 10% of your property rebuild value. Your broker may recommend a different figure based on your circumstances." },
+    { q:"Can I override the AI valuation?", a:"Yes! After scanning, tap 'Override estimated value' to enter your own figure. Both the AI estimate and your override are stored and shown in your reports." },
+    { q:"How do I add items I can't photograph?", a:"Use 'Add Everyday Items' on any room card to add grouped items like clothing or kitchenware as a single estimated value. No photo needed." },
+    { q:"Is my data safe?", a:"Yes. All data is stored on encrypted servers in the EU (Ireland), fully GDPR compliant. We never share or sell your personal data." },
+    { q:"How do I share my report with my broker?", a:"Open any property, tap 'Broker Report', then tap 'PDF' to download or print. You can then email the PDF directly to your broker." },
+  ];
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0f5fb,#e8f1f8)", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif", paddingBottom:40 }}>
+      <AppHeader title="Help & Support" subtitle="FAQs and contact us" onBack={onBack} />
+      <div style={{ maxWidth:500, margin:"0 auto", padding:"20px 14px" }}>
+        <div style={{ background:"linear-gradient(135deg,#1B3A6B,#1e4d8c)", borderRadius:18, padding:"18px", marginBottom:20 }}>
+          <div style={{ color:"white", fontWeight:800, fontSize:16, marginBottom:4 }}>Need help? We're here!</div>
+          <div style={{ color:"rgba(255,255,255,0.85)", fontSize:13, marginBottom:14 }}>Our team typically responds within 24 hours.</div>
+          <div style={{ display:"flex", gap:10 }}>
+            <div style={{ flex:1, background:"rgba(255,255,255,0.1)", borderRadius:12, padding:"12px", textAlign:"center" }}>
+              <div style={{ color:"rgba(255,255,255,0.8)", fontSize:10, fontWeight:600, textTransform:"uppercase", marginBottom:4 }}>Email</div>
+              <div style={{ color:"white", fontWeight:700, fontSize:12 }}>hello@roomworth.co.uk</div>
+            </div>
+            <div style={{ flex:1, background:"rgba(255,255,255,0.1)", borderRadius:12, padding:"12px", textAlign:"center" }}>
+              <div style={{ color:"rgba(255,255,255,0.8)", fontSize:10, fontWeight:600, textTransform:"uppercase", marginBottom:4 }}>Website</div>
+              <div style={{ color:"white", fontWeight:700, fontSize:12 }}>roomworth.co.uk</div>
+            </div>
+          </div>
+        </div>
+        <div style={{ background:"white", borderRadius:16, padding:"18px", marginBottom:16, border:"1px solid #e8eef5" }}>
+          <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:15, marginBottom:14 }}>Quick Start Guide</div>
+          {[
+            { step:"1", title:"Add a Property", desc:"Tap '+ Add Property', enter your property details and rebuild value." },
+            { step:"2", title:"Scan Your Items", desc:"Go into any room and tap '+ Scan' to photograph and value your items." },
+            { step:"3", title:"Add Everyday Items", desc:"Use 'Add Everyday Items' for clothing, kitchenware and other grouped items." },
+            { step:"4", title:"Generate Reports", desc:"Tap 'Broker Report' to get a professional PDF to share with your broker." },
+          ].map(({step,title,desc})=>(
+            <div key={step} style={{ display:"flex", gap:14, marginBottom:14 }}>
+              <div style={{ width:32, height:32, borderRadius:"50%", background:"linear-gradient(135deg,#1B3A6B,#4AABBF)", display:"flex", alignItems:"center", justifyContent:"center", color:"white", fontWeight:800, fontSize:14, flexShrink:0 }}>{step}</div>
+              <div>
+                <div style={{ color:"#1B3A6B", fontWeight:700, fontSize:14 }}>{title}</div>
+                <div style={{ color:"#64748b", fontSize:12, marginTop:2, lineHeight:1.5 }}>{desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:16, marginBottom:12 }}>Frequently Asked Questions</div>
+        {faqs.map((faq,i)=>(
+          <div key={i} style={{ background:"white", borderRadius:14, marginBottom:8, border:"1px solid #e8eef5", overflow:"hidden" }}>
+            <div onClick={()=>setOpenFaq(openFaq===i?null:i)} style={{ padding:"14px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", cursor:"pointer" }}>
+              <span style={{ color:"#1B3A6B", fontWeight:700, fontSize:13, flex:1, paddingRight:10 }}>{faq.q}</span>
+              <SvgIcon name={openFaq===i?"arrow_l":"chevron_r"} size={16} color="#94a3b8"/>
+            </div>
+            {openFaq===i && <div style={{ padding:"0 16px 14px", color:"#374151", fontSize:13, lineHeight:1.7, borderTop:"1px solid #f1f5f9" }}>{faq.a}</div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Terms & Privacy Policy Page ───────────────────────────────────────────────
+function TermsPage({ onBack }) {
+  const S = ({title,children}) => (
+    <div style={{ marginBottom:20 }}>
+      <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:15, marginBottom:8, paddingBottom:6, borderBottom:"2px solid #e8eef5" }}>{title}</div>
+      <div style={{ color:"#374151", fontSize:13, lineHeight:1.8 }}>{children}</div>
+    </div>
+  );
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0f5fb,#e8f1f8)", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif", paddingBottom:40 }}>
+      <AppHeader title="Terms & Privacy Policy" subtitle="Legal information" onBack={onBack} />
+      <div style={{ maxWidth:500, margin:"0 auto", padding:"20px 14px" }}>
+        <div style={{ background:"linear-gradient(135deg,#1B3A6B,#1e4d8c)", borderRadius:18, padding:"18px", marginBottom:20 }}>
+          <div style={{ color:"white", fontWeight:800, fontSize:16, marginBottom:4 }}>Room Worth Limited</div>
+          <div style={{ color:"rgba(255,255,255,0.85)", fontSize:12, lineHeight:1.6 }}>Last updated: May 2026 · Registered in England & Wales</div>
+        </div>
+        <div style={{ background:"white", borderRadius:16, padding:"20px", border:"1px solid #e8eef5", boxShadow:"0 2px 8px rgba(27,58,107,0.05)" }}>
+          <S title="1. About Room Worth">Room Worth is a home contents estimation service powered by artificial intelligence, provided by Room Worth Limited to help users estimate the replacement value of their home contents for insurance purposes.</S>
+          <S title="2. Important Disclaimer">All valuations are <strong>estimates only</strong> generated by AI analysis. These are not professional insurance valuations. We strongly recommend reviewing all valuations with a qualified insurance broker. Room Worth Limited accepts no liability for any under or over-insurance arising from use of this service.</S>
+          <S title="3. Specialist Items">Items including jewellery, watches, fine art, antiques and collectibles require specialist professional valuation. Room Worth flags these items but cannot value them. They must be individually valued by an approved specialist.</S>
+          <S title="4. Data We Collect">We collect your name and email address, your broker access code, property details including addresses and rebuild values, room contents including item names, descriptions, photographs and estimated values, and usage data to improve our service.</S>
+          <S title="5. How We Use Your Data">Your data is used solely to provide the Room Worth service. We do not sell, share or transfer your personal data to third parties except as required by law.</S>
+          <S title="6. Data Storage & Security">All data is stored on secure encrypted servers in the EU (Ireland) operated by Supabase Inc. AI scanning is provided by Anthropic PBC. All processing complies with UK GDPR and the Data Protection Act 2018.</S>
+          <S title="7. Your Rights">Under UK GDPR you have the right to access, correct or delete your personal data, object to processing, and data portability. Contact: privacy@roomworth.co.uk</S>
+          <S title="8. Cookies">Room Worth uses essential cookies only to maintain your login session. We do not use advertising or tracking cookies.</S>
+          <S title="9. Broker Access Codes">Codes are issued to authorised brokers and must not be shared publicly. Room Worth reserves the right to revoke access codes at any time.</S>
+          <S title="10. Limitation of Liability">To the fullest extent permitted by law, Room Worth Limited shall not be liable for any indirect or consequential damages arising from use of this service.</S>
+          <S title="11. Changes to These Terms">We may update these terms from time to time. Continued use following notification of changes constitutes acceptance.</S>
+          <S title="12. Contact Us">Email: hello@roomworth.co.uk · Privacy: privacy@roomworth.co.uk · Web: www.roomworth.co.uk</S>
+        </div>
+        <div style={{ textAlign:"center", color:"#94a3b8", fontSize:11, marginTop:16 }}>© {new Date().getFullYear()} Room Worth Limited. All rights reserved.</div>
+      </div>
+    </div>
+  );
+}
+
+
