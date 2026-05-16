@@ -1575,13 +1575,13 @@ function ReportViewer({ type, property, onBack }) {
               </div>
             </div>
             <div style={{ color:"white", fontWeight:800, fontSize:20, marginBottom:3 }}>{property.name}</div>
-            <div style={{ color:"white", fontSize:12, marginBottom:14 }}>{property.address}</div>
+            <div style={{ color:"white", fontWeight:600, fontSize:12, marginBottom:14, textShadow:"0 1px 2px rgba(0,0,0,0.3)" }}>{property.address}</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:8 }}>
               {[{label:"Rebuild",value:fmt(property.rebuildValue),icon:"building"},{label:"Contents",value:fmt(totalContents),icon:"rooms"},{label:"Recommended",value:fmt(property.recommendedContents),icon:"report"},{label:"Coverage",value:`${pct}%`,icon:"list"}].map(({label,value,icon})=>(
                 <div key={label} style={{ background:"rgba(255,255,255,0.1)", borderRadius:11, padding:"9px 5px", textAlign:"center" }}>
                   <div style={{ display:"flex", justifyContent:"center", marginBottom:4 }}><SvgIcon name={icon} size={14} color="rgba(255,255,255,0.95)"/></div>
-                  <div style={{ color:"white", fontWeight:900, fontSize:13 }}>{value}</div>
-                  <div style={{ color:"#ffff00", fontSize:9, fontWeight:700, textTransform:"uppercase", marginTop:1 }}>{label}</div>
+                  <div style={{ color:"white", fontWeight:900, fontSize:14, textShadow:"0 1px 2px rgba(0,0,0,0.3)" }}>{value}</div>
+                  <div style={{ color:"white", fontSize:9, fontWeight:700, textTransform:"uppercase", marginTop:1 }}>{label}</div>
                 </div>
               ))}
             </div>
@@ -1641,7 +1641,7 @@ function ReportViewer({ type, property, onBack }) {
                 <div style={{ width:36, height:36, borderRadius:8, background:"#fed7aa", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>🏠</div>
                 <div style={{ flex:1 }}>
                   <div style={{ color:"#9a3412", fontWeight:700, fontSize:13 }}>{alert.room}</div>
-                  <div style={{ color:"#c2410c", fontSize:11, marginTop:1 }}>No <strong>{alert.missing}</strong> scanned — please check if this item needs to be added</div>
+                  <div style={{ color:"#7c2d12", fontSize:11, fontWeight:600, marginTop:1 }}>No <strong>{alert.missing}</strong> scanned — please check if this item needs to be added</div>
                 </div>
               </div>
             ))}
