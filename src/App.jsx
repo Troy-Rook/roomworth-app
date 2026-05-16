@@ -1581,7 +1581,7 @@ function ReportViewer({ type, property, onBack }) {
                 <div key={label} style={{ background:"rgba(255,255,255,0.1)", borderRadius:11, padding:"9px 5px", textAlign:"center" }}>
                   <div style={{ display:"flex", justifyContent:"center", marginBottom:4 }}><SvgIcon name={icon} size={14} color="rgba(255,255,255,0.95)"/></div>
                   <div style={{ color:"white", fontWeight:900, fontSize:13 }}>{value}</div>
-                  <div style={{ color:"white", fontSize:9, fontWeight:700, textTransform:"uppercase", marginTop:1 }}>{label}</div>
+                  <div style={{ color:"#ffff00", fontSize:9, fontWeight:700, textTransform:"uppercase", marginTop:1 }}>{label}</div>
                 </div>
               ))}
             </div>
