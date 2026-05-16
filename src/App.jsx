@@ -1555,7 +1555,7 @@ function ReportViewer({ type, property, onBack }) {
         <button onClick={onBack} style={{ background:"#f1f5f9", border:"none", borderRadius:"50%", width:34, height:34, cursor:"pointer", color:"#1B3A6B", fontSize:18, display:"flex", alignItems:"center", justifyContent:"center" }}>←</button>
         <div style={{ flex:1 }}>
           <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:15 }}>{type==="broker"?"Broker Report":"Inventory Report"}</div>
-          <div style={{ color:"#94a3b8", fontSize:11 }}>Ref: {reportRef}</div>
+          <div style={{ color:"#374151", fontSize:11 }}>Ref: {reportRef}</div>
         </div>
         <button onClick={()=>window.print()} style={{ background:"linear-gradient(135deg,#1B3A6B,#2563ab)", border:"none", borderRadius:11, padding:"9px 16px", color:"white", fontSize:12, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}><SvgIcon name="download" size={14} color="white"/> PDF</button>
       </div>
@@ -1569,19 +1569,19 @@ function ReportViewer({ type, property, onBack }) {
               <Logo size={44} />
               <div><div style={{ color:"white", fontWeight:900, fontSize:17 }}>ROOM WORTH</div><div style={{ color:"rgba(74,171,191,0.9)", fontSize:12 }}>Contents Estimator</div></div>
               <div style={{ marginLeft:"auto", textAlign:"right" }}>
-                <div style={{ color:"rgba(255,255,255,0.85)", fontSize:10, textTransform:"uppercase", letterSpacing:"0.6px" }}>{type==="broker"?"Broker Report":"Inventory"}</div>
+                <div style={{ color:"white", fontSize:10, textTransform:"uppercase", letterSpacing:"0.6px" }}>{type==="broker"?"Broker Report":"Inventory"}</div>
                 <div style={{ color:"white", fontWeight:900, fontSize:12, fontFamily:"monospace" }}>{reportRef}</div>
-                <div style={{ color:"rgba(255,255,255,0.85)", fontSize:10, marginTop:2 }}>{date}</div>
+                <div style={{ color:"white", fontSize:10, marginTop:2 }}>{date}</div>
               </div>
             </div>
             <div style={{ color:"white", fontWeight:800, fontSize:20, marginBottom:3 }}>{property.name}</div>
-            <div style={{ color:"rgba(255,255,255,0.85)", fontSize:12, marginBottom:14 }}>{property.address}</div>
+            <div style={{ color:"white", fontSize:12, marginBottom:14 }}>{property.address}</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:8 }}>
               {[{label:"Rebuild",value:fmt(property.rebuildValue),icon:"building"},{label:"Contents",value:fmt(totalContents),icon:"rooms"},{label:"Recommended",value:fmt(property.recommendedContents),icon:"report"},{label:"Coverage",value:`${pct}%`,icon:"list"}].map(({label,value,icon})=>(
                 <div key={label} style={{ background:"rgba(255,255,255,0.1)", borderRadius:11, padding:"9px 5px", textAlign:"center" }}>
-                  <div style={{ display:"flex", justifyContent:"center", marginBottom:4 }}><SvgIcon name={icon} size={14} color="rgba(255,255,255,0.7)"/></div>
+                  <div style={{ display:"flex", justifyContent:"center", marginBottom:4 }}><SvgIcon name={icon} size={14} color="rgba(255,255,255,0.95)"/></div>
                   <div style={{ color:"white", fontWeight:900, fontSize:13 }}>{value}</div>
-                  <div style={{ color:"rgba(255,255,255,0.85)", fontSize:9, fontWeight:700, textTransform:"uppercase", marginTop:1 }}>{label}</div>
+                  <div style={{ color:"white", fontSize:9, fontWeight:700, textTransform:"uppercase", marginTop:1 }}>{label}</div>
                 </div>
               ))}
             </div>
@@ -1607,7 +1607,7 @@ function ReportViewer({ type, property, onBack }) {
               <span style={{ fontSize:18 }}>⭐</span>
               <div>
                 <div style={{ color:"white", fontWeight:800, fontSize:14 }}>Specialist Items — Individual Valuation Required</div>
-                <div style={{ color:"rgba(255,255,255,0.7)", fontSize:11 }}>These items cannot be valued by AI and require a professional specialist</div>
+                <div style={{ color:"rgba(255,255,255,0.95)", fontSize:11 }}>These items cannot be valued by AI and require a professional specialist</div>
               </div>
             </div>
             {specialistItems.map((item,i)=>(
@@ -1616,7 +1616,7 @@ function ReportViewer({ type, property, onBack }) {
                 {!item.image && <div style={{ width:44, height:44, borderRadius:8, background:"#ede9fe", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>⭐</div>}
                 <div style={{ flex:1 }}>
                   <div style={{ color:"#4c1d95", fontWeight:700, fontSize:13 }}>{item.name}</div>
-                  <div style={{ color:"#64748b", fontSize:11, marginTop:1 }}>{item.description}</div>
+                  <div style={{ color:"#1e293b", fontSize:11, marginTop:1 }}>{item.description}</div>
                   <div style={{ color:"#7c3aed", fontSize:11, marginTop:1 }}>Found in: {item.room}</div>
                 </div>
                 <div style={{ background:"#7c3aed", color:"white", borderRadius:8, padding:"4px 10px", fontSize:10, fontWeight:800, flexShrink:0 }}>SPECIALIST</div>
@@ -1633,7 +1633,7 @@ function ReportViewer({ type, property, onBack }) {
               <span style={{ fontSize:18 }}>📋</span>
               <div>
                 <div style={{ color:"white", fontWeight:800, fontSize:14 }}>Possible Missing Key Items</div>
-                <div style={{ color:"rgba(255,255,255,0.7)", fontSize:11 }}>Common items not yet scanned in these rooms</div>
+                <div style={{ color:"rgba(255,255,255,0.95)", fontSize:11 }}>Common items not yet scanned in these rooms</div>
               </div>
             </div>
             {missingItemsAlerts.map((alert,i)=>(
@@ -1669,17 +1669,17 @@ function ReportViewer({ type, property, onBack }) {
                       <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                         <span style={{ color:"#1B3A6B", fontWeight:700, fontSize:12 }}>{item.name}</span>
                         {item.specialist && <span style={{ background:"#7c3aed", color:"white", fontSize:8, fontWeight:800, borderRadius:4, padding:"1px 5px" }}>SPEC</span>}
-                        {item.qty>1 && <span style={{ color:"#94a3b8", fontSize:11 }}>×{item.qty}</span>}
+                        {item.qty>1 && <span style={{ color:"#374151", fontSize:11 }}>×{item.qty}</span>}
                       </div>
                       <div style={{ color:"#475569", fontSize:11, marginTop:1 }}>{item.description}</div>
-                      <div style={{ color:"#64748b", fontSize:10, marginTop:1 }}>Confidence: {item.confidence}%</div>
+                      <div style={{ color:"#1e293b", fontSize:10, marginTop:1 }}>Confidence: {item.confidence}%</div>
                     </div>
                     <div style={{ textAlign:"right", flexShrink:0 }}>
                       <div style={{ color:item.specialist?"#7c3aed":"#1B3A6B", fontWeight:800, fontSize:13 }}>{item.specialist?"Specialist":fmt((item.override_value||item.value)*item.qty)}</div>
                       {item.override_value && (
                         <div style={{ marginTop:4, background:"#f0f9ff", border:"1px solid #bae6fd", borderRadius:6, padding:"3px 6px", display:"inline-block" }}>
                           <div style={{ color:"#0369a1", fontSize:8, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.3px" }}>Client override</div>
-                          <div style={{ color:"#64748b", fontSize:9 }}>AI: {fmt(item.value*item.qty)}</div>
+                          <div style={{ color:"#1e293b", fontSize:9 }}>AI: {fmt(item.value*item.qty)}</div>
                         </div>
                       )}
                     </div>
@@ -1693,14 +1693,14 @@ function ReportViewer({ type, property, onBack }) {
           <div style={{ background:"white", borderRadius:18, overflow:"hidden", border:"1px solid #e8eef5", boxShadow:"0 2px 10px rgba(27,58,107,0.06)", marginBottom:14 }}>
             <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr 50px 75px 65px", padding:"9px 14px", background:"#f8fafc", borderBottom:"2px solid #e8eef5" }}>
               {["Item","Room","Qty","Value","Conf."].map((h,i)=>(
-                <div key={h} style={{ color:"#94a3b8", fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.6px", textAlign:i>=2?"center":"left" }}>{h}</div>
+                <div key={h} style={{ color:"#374151", fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.6px", textAlign:i>=2?"center":"left" }}>{h}</div>
               ))}
             </div>
             {allItems.map((item,i)=>(
               <div key={i} style={{ display:"grid", gridTemplateColumns:"2fr 1fr 50px 75px 65px", padding:"11px 14px", alignItems:"center", borderBottom:i<allItems.length-1?"1px solid #f1f5f9":"none", background:item.specialist?"#fefce8":i%2===0?"white":"#fafbfc" }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                   {item.image && <img src={item.image} alt={item.name} style={{ width:36, height:36, borderRadius:7, objectFit:"cover", flexShrink:0, border:"1px solid #e2e8f0" }} />}
-                  {!item.image && <div style={{ width:36, height:36, borderRadius:7, background:"#f1f5f9", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><SvgIcon name="rooms" size={16} color="#94a3b8"/></div>}
+                  {!item.image && <div style={{ width:36, height:36, borderRadius:7, background:"#f1f5f9", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><SvgIcon name="rooms" size={16} color="#374151"/></div>}
                   <div>
                     <div style={{ display:"flex", alignItems:"center", gap:5 }}>
                       <span style={{ color:"#1B3A6B", fontWeight:700, fontSize:12 }}>{item.name}</span>
@@ -1710,13 +1710,13 @@ function ReportViewer({ type, property, onBack }) {
                   </div>
                 </div>
                 <div><span style={{ background:`${item.roomColor}15`, color:item.roomColor, fontSize:9, fontWeight:700, borderRadius:5, padding:"2px 6px" }}>{item.room}</span></div>
-                <div style={{ textAlign:"center", color:"#64748b", fontWeight:700, fontSize:12 }}>{item.qty}</div>
+                <div style={{ textAlign:"center", color:"#1e293b", fontWeight:700, fontSize:12 }}>{item.qty}</div>
                 <div style={{ textAlign:"center" }}>
                   <div style={{ color:item.specialist?"#7c3aed":"#1B3A6B", fontWeight:800, fontSize:12 }}>{item.specialist?"Spec.":fmt((item.override_value||item.value)*item.qty)}</div>
                   {item.override_value && (
                     <div style={{ marginTop:3, background:"#f0f9ff", borderRadius:5, padding:"2px 5px", display:"inline-block" }}>
                       <div style={{ color:"#0369a1", fontSize:8, fontWeight:700 }}>Override</div>
-                      <div style={{ color:"#94a3b8", fontSize:8 }}>AI: {fmt(item.value)}</div>
+                      <div style={{ color:"#374151", fontSize:8 }}>AI: {fmt(item.value)}</div>
                     </div>
                   )}
                 </div>
@@ -1741,7 +1741,7 @@ function ReportViewer({ type, property, onBack }) {
         {/* Footer */}
         <div style={{ textAlign:"center", padding:"14px 0" }}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:9, marginBottom:6 }}><Logo size={24}/><div style={{ color:"#1B3A6B", fontWeight:800, fontSize:13 }}>ROOM WORTH</div></div>
-          <div style={{ color:"#64748b", fontSize:11, lineHeight:1.6 }}>hello@roomworth.co.uk · www.roomworth.co.uk<br/>Generated {date} · Ref: {reportRef}<br/>© {new Date().getFullYear()} Room Worth Limited</div>
+          <div style={{ color:"#1e293b", fontSize:11, lineHeight:1.6 }}>hello@roomworth.co.uk · www.roomworth.co.uk<br/>Generated {date} · Ref: {reportRef}<br/>© {new Date().getFullYear()} Room Worth Limited</div>
         </div>
       </div>
     </div>
