@@ -2009,4 +2009,164 @@ function TermsPage({ onBack }) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// NAVIGATION CONTROLLER
+// ─────────────────────────────────────────────────────────────────────────────
+export default function RoomWorthApp() {
+  const [user, setUser]               = useState(null);
+  const [screen, setScreen]           = useState("auth");
+  const [properties, setProperties]   = useState([]);
+  const [activeProperty, setActiveProperty] = useState(null);
+  const [scanTargetRoom, setScanTargetRoom] = useState(null);
+  const [reportConfig, setReportConfig]     = useState(null);
+  const [activeTab, setActiveTab]     = useState("properties");
+  const [dbLoading, setDbLoading]     = useState(false);
 
+  useEffect(() => {
+    if (!user?.id) return;
+    loadProperties(user.id);
+  }, [user]);
+
+  const loadProperties = async (userId) => {
+    setDbLoading(true);
+    try {
+      const { data: props, error } = await supabase
+        .from("properties").select("*").eq("user_id", userId).order("created_at", { ascending: true });
+      if (error) throw error;
+      const fullProps = await Promise.all((props || []).map(async (p) => {
+        const { data: rooms } = await supabase
+          .from("rooms").select("*").eq("property_id", p.id).order("created_at", { ascending: true });
+        const fullRooms = await Promise.all((rooms || []).map(async (r) => {
+          const { data: items } = await supabase
+            .from("items").select("*").eq("room_id", r.id).order("created_at", { ascending: true });
+          return { ...r, id: r.id, items: (items || []).map(i => ({...i, qty: i.qty||1, value: i.value||0})) };
+        }));
+        const currentContents = fullRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0);
+        return { ...p, id: p.id, rooms: fullRooms, currentContents, recommendedContents: p.recommended_contents, rebuildValue: p.rebuild_value };
+      }));
+      setProperties(fullProps);
+    } catch(e) { console.error("Load error:", e); }
+    finally { setDbLoading(false); }
+  };
+
+  const handleLogin = async (userData) => {
+    try {
+      let { data: existing } = await supabase
+        .from("users").select("*").eq("email", userData.email).single();
+      if (!existing) {
+        const { data: newUser } = await supabase.from("users").insert({
+          email: userData.email,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          broker_code: userData.broker?.code || "ROOMWORTH26"
+        }).select().single();
+        existing = newUser;
+        setUser({ ...userData, id: existing?.id });
+      } else {
+        setUser({ ...userData, id: existing.id, firstName: existing.first_name || userData.firstName, lastName: existing.last_name || userData.lastName });
+      }
+    } catch(e) {
+      setUser({ ...userData, id: null });
+    }
+    setScreen("properties"); setActiveTab("properties");
+  };
+
+  const handleLogout = () => { setUser(null); setScreen("auth"); setProperties([]); setActiveProperty(null); };
+
+  const handleViewProperty = (prop) => {
+    const latest = properties.find(p => p.id === prop.id) || prop;
+    setActiveProperty(latest); setScreen("rooms");
+  };
+
+  const handleUpdateProperty = async (updated) => {
+    setProperties(prev => prev.map(p => p.id===updated.id ? updated : p));
+    setActiveProperty(updated);
+    if (updated.id && !updated.id.startsWith("p") && user?.id) {
+      try {
+        await supabase.from("properties").update({
+          name: updated.name, address: updated.address,
+          rebuild_value: updated.rebuildValue, recommended_contents: updated.recommendedContents
+        }).eq("id", updated.id);
+      } catch(e) { console.error("Update property error:", e); }
+    }
+  };
+
+  const handleScanItem = (room) => { setScanTargetRoom(room); setScreen("scanner"); };
+
+  const handleItemScanned = async (roomId, item) => {
+    if (!activeProperty) return;
+    const updatedRooms = activeProperty.rooms.map(r => r.id===roomId ? {...r, items:[...r.items, item]} : r);
+    const updated = { ...activeProperty, rooms: updatedRooms, currentContents: updatedRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0) };
+    handleUpdateProperty(updated);
+    if (user?.id && roomId) {
+      try {
+        const { error } = await supabase.from("items").insert({
+          room_id: roomId, name: item.name, description: item.description,
+          qty: item.qty, value: item.value, override_value: item.override_value || null,
+          low_value: item.low_value, high_value: item.high_value, confidence: item.confidence,
+          specialist: item.specialist || false, specialist_reason: item.specialist_reason || null,
+          image: item.image || null, is_misc: item.isMisc || false
+        });
+        if (error) console.error("Insert item error:", error);
+      } catch(e) { console.error("Save item error:", e); }
+    }
+  };
+
+  const saveProperty = async (prop) => {
+    const isNew = !properties.find(p => p.id === prop.id);
+    if (isNew && user?.id) {
+      try {
+        const { data } = await supabase.from("properties").insert({
+          user_id: user.id, name: prop.name, address: prop.address, type: prop.type,
+          rebuild_value: prop.rebuildValue, recommended_contents: prop.recommendedContents
+        }).select().single();
+        if (data) {
+          const roomsWithIds = await Promise.all(prop.rooms.map(async (r) => {
+            const { data: rData } = await supabase.from("rooms").insert({
+              property_id: data.id, name: r.name, type: r.type, color: r.color
+            }).select().single();
+            return { ...r, id: rData?.id || r.id };
+          }));
+          const savedProp = { ...prop, id: data.id, rooms: roomsWithIds };
+          setProperties(prev => [...prev, savedProp]);
+          return;
+        }
+      } catch(e) { console.error("Save new property error:", e); }
+    }
+    setProperties(prev => prev.find(p=>p.id===prop.id) ? prev.map(p=>p.id===prop.id?prop:p) : [...prev,prop]);
+  };
+
+  const handleViewReport = (type, prop) => { setReportConfig({type, property:prop}); setScreen("report"); };
+
+  const handleNavigate = (tab) => {
+    setActiveTab(tab);
+    if (tab==="properties") setScreen("properties");
+    else if (tab==="scanner") { setScanTargetRoom(null); setScreen("scanner"); }
+    else if (tab==="reports") setScreen("reports");
+    else if (tab==="account") setScreen("account");
+  };
+
+  return (
+    <div style={{ fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif" }}>
+      {screen==="auth"       && <AuthScreen onLogin={handleLogin} />}
+      {screen==="properties" && user && <PropertiesScreen user={user} properties={properties} setProperties={setProperties} saveProperty={saveProperty} onViewProperty={handleViewProperty} onNavigate={handleNavigate} />}
+      {screen==="rooms"      && activeProperty && <RoomsScreen property={properties.find(p=>p.id===activeProperty.id)||activeProperty} onUpdateProperty={handleUpdateProperty} onBack={()=>setScreen("properties")} onScanItem={handleScanItem} onViewReport={handleViewReport} onNavigate={handleNavigate} />}
+      {screen==="scanner"    && <ScannerScreen user={user} targetRoom={scanTargetRoom} properties={properties} onBack={()=>activeProperty?setScreen("rooms"):setScreen("properties")} onItemScanned={handleItemScanned} onNavigate={handleNavigate} />}
+      {screen==="reports"    && <ReportsScreen properties={properties} onViewReport={handleViewReport} onNavigate={handleNavigate} />}
+      {screen==="report"     && reportConfig && <ReportViewer type={reportConfig.type} property={properties.find(p=>p.id===reportConfig.property.id)||activeProperty||reportConfig.property} onBack={()=>setScreen(activeProperty?"rooms":"reports")} />}
+      {screen==="account"    && user && <AccountScreen user={user} onLogout={handleLogout} onNavigate={handleNavigate} />}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
+        @keyframes popIn  { from{opacity:0;transform:scale(0.88)}to{opacity:1;transform:scale(1)} }
+        @keyframes spin   { to{transform:rotate(360deg)} }
+        input::placeholder,textarea::placeholder{color:#94a3b8}
+        input:focus,textarea:focus{border-color:#4AABBF!important;box-shadow:0 0 0 3px rgba(74,171,191,0.12)!important;outline:none}
+        button:active{transform:scale(0.97)}
+        *{-webkit-tap-highlight-color:transparent}
+        textarea{font-family:inherit}
+        @media print{.no-print{display:none!important}}
+      `}</style>
+    </div>
+  );
+}
