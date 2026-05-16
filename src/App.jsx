@@ -1918,7 +1918,7 @@ function HelpPage({ onBack }) {
     { q:"What is a specialist item?", a:"Specialist items include jewellery, watches, fine art, antiques and collectibles that require individual professional valuation. These are flagged automatically and excluded from the estimated total." },
     { q:"What is the recommended contents value?", a:"We recommend insuring contents for a minimum of 10% of your property rebuild value. Your broker may recommend a different figure based on your circumstances." },
     { q:"Can I override the AI valuation?", a:"Yes! After scanning, tap 'Override estimated value' to enter your own figure. Both the AI estimate and your override are stored and shown in your reports." },
-    { q:"How do I add items I can't photograph?", a:"Use 'Add Everyday Items' on any room card to add grouped items like clothing or kitchenware as a single estimated value. No photo needed." },
+    { q:"How do I add items I cannot photograph?", a:"Use &apos;Add Everyday Items&apos; on any room card to add grouped items like clothing or kitchenware as a single estimated value. No photo needed." },
     { q:"Is my data safe?", a:"Yes. All data is stored on encrypted servers in the EU (Ireland), fully GDPR compliant. We never share or sell your personal data." },
     { q:"How do I share my report with my broker?", a:"Open any property, tap 'Broker Report', then tap 'PDF' to download or print. You can then email the PDF directly to your broker." },
   ];
@@ -1927,7 +1927,7 @@ function HelpPage({ onBack }) {
       <AppHeader title="Help & Support" subtitle="FAQs and contact us" onBack={onBack} />
       <div style={{ maxWidth:500, margin:"0 auto", padding:"20px 14px" }}>
         <div style={{ background:"linear-gradient(135deg,#1B3A6B,#1e4d8c)", borderRadius:18, padding:"18px", marginBottom:20 }}>
-          <div style={{ color:"white", fontWeight:800, fontSize:16, marginBottom:4 }}>Need help? We're here!</div>
+          <div style={{ color:"white", fontWeight:800, fontSize:16, marginBottom:4 }}>Need help? We&apos;re here!</div>
           <div style={{ color:"rgba(255,255,255,0.85)", fontSize:13, marginBottom:14 }}>Our team typically responds within 24 hours.</div>
           <div style={{ display:"flex", gap:10 }}>
             <div style={{ flex:1, background:"rgba(255,255,255,0.1)", borderRadius:12, padding:"12px", textAlign:"center" }}>
@@ -1945,7 +1945,7 @@ function HelpPage({ onBack }) {
           {[
             { step:"1", title:"Add a Property", desc:"Tap '+ Add Property', enter your property details and rebuild value." },
             { step:"2", title:"Scan Your Items", desc:"Go into any room and tap '+ Scan' to photograph and value your items." },
-            { step:"3", title:"Add Everyday Items", desc:"Use 'Add Everyday Items' for clothing, kitchenware and other grouped items." },
+            { step:"3", title:"Add Everyday Items", desc:"Use &apos;Add Everyday Items&apos; for clothing, kitchenware and other grouped items." },
             { step:"4", title:"Generate Reports", desc:"Tap 'Broker Report' to get a professional PDF to share with your broker." },
           ].map(({step,title,desc})=>(
             <div key={step} style={{ display:"flex", gap:14, marginBottom:14 }}>
