@@ -318,6 +318,128 @@ function RoomSelectorAdd({ properties, onAdd, onScanAnother }) {
   );
 }
 
+
+// ── Paywall Screen ────────────────────────────────────────────────────────────
+function PaywallScreen({ email, onSuccess, onBack }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Check if returning from successful payment
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "success") {
+      onSuccess();
+    }
+  }, []);
+
+  const handleCheckout = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.error || "Something went wrong. Please try again.");
+      }
+    } catch (e) {
+      setError("Connection error. Please try again.");
+    }
+    setLoading(false);
+  };
+
+  if (showPaywall) return (
+    <PaywallScreen
+      email={email.trim()}
+      onSuccess={()=>{ onLogin({ firstName:firstName.trim(), lastName:lastName.trim(), email:email.trim(), broker }); }}
+      onBack={()=>setShowPaywall(false)}
+    />
+  );
+
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#0f1e3d,#1B3A6B,#1e4d8c)", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"24px" }}>
+      
+      {/* Logo */}
+      <div style={{ marginBottom:32, textAlign:"center" }}>
+        <Logo size={52} />
+        <div style={{ color:"white", fontWeight:900, fontSize:28, letterSpacing:"-0.5px", marginTop:12 }}>ROOM WORTH</div>
+        <div style={{ color:"#4AABBF", fontWeight:600, fontSize:14 }}>Contents Estimator</div>
+      </div>
+
+      {/* Pricing card */}
+      <div style={{ background:"white", borderRadius:24, padding:"32px 28px", width:"100%", maxWidth:400, boxShadow:"0 20px 60px rgba(0,0,0,0.3)" }}>
+        
+        <div style={{ textAlign:"center", marginBottom:24 }}>
+          <div style={{ background:"linear-gradient(135deg,#4AABBF,#0891b2)", borderRadius:12, padding:"6px 16px", display:"inline-block", marginBottom:12 }}>
+            <span style={{ color:"white", fontWeight:700, fontSize:12, textTransform:"uppercase", letterSpacing:"0.8px" }}>Room Worth Direct</span>
+          </div>
+          <div style={{ color:"#1B3A6B", fontWeight:900, fontSize:22, marginBottom:6 }}>Start your contents inventory</div>
+          <div style={{ color:"#64748b", fontSize:14, lineHeight:1.5 }}>Know exactly what your home contents are worth — powered by A.I.</div>
+        </div>
+
+        {/* Price */}
+        <div style={{ background:"linear-gradient(135deg,#f0f5ff,#e8f1f8)", borderRadius:18, padding:"20px", textAlign:"center", marginBottom:24 }}>
+          <div style={{ color:"#64748b", fontSize:13, fontWeight:600, marginBottom:4 }}>Monthly subscription</div>
+          <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"center", gap:4 }}>
+            <span style={{ color:"#1B3A6B", fontWeight:700, fontSize:20, marginTop:8 }}>£</span>
+            <span style={{ color:"#1B3A6B", fontWeight:900, fontSize:52, lineHeight:1 }}>20</span>
+            <span style={{ color:"#64748b", fontWeight:600, fontSize:16, marginTop:16 }}>/mo</span>
+          </div>
+          <div style={{ color:"#94a3b8", fontSize:12, marginTop:4 }}>Cancel anytime</div>
+        </div>
+
+        {/* Features */}
+        {[
+          "AI-powered item scanning",
+          "Unlimited properties & rooms",
+          "Professional broker reports",
+          "Specialist item detection",
+          "Secure cloud storage",
+          "Annual revaluation reminders",
+        ].map((feature, i) => (
+          <div key={i} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+            <div style={{ width:20, height:20, borderRadius:"50%", background:"linear-gradient(135deg,#4AABBF,#0891b2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+              <SvgIcon name="check" size={11} color="white"/>
+            </div>
+            <span style={{ color:"#374151", fontSize:13, fontWeight:500 }}>{feature}</span>
+          </div>
+        ))}
+
+        {error && (
+          <div style={{ background:"#fef2f2", border:"1px solid #fecaca", borderRadius:10, padding:"10px 14px", marginTop:16, color:"#dc2626", fontSize:13 }}>
+            {error}
+          </div>
+        )}
+
+        {/* CTA */}
+        <button onClick={handleCheckout} disabled={loading}
+          style={{ width:"100%", background:loading?"#e2e8f0":"linear-gradient(135deg,#1B3A6B,#2563ab)", border:"none", borderRadius:16, padding:"17px", color:loading?"#94a3b8":"white", fontSize:16, fontWeight:800, cursor:loading?"not-allowed":"pointer", marginTop:20, boxShadow:loading?"none":"0 6px 20px rgba(27,58,107,0.3)", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+          {loading ? "Redirecting to payment..." : "Start for £20/month →"}
+        </button>
+
+        <div style={{ textAlign:"center", marginTop:14 }}>
+          <span style={{ color:"#94a3b8", fontSize:12 }}>Secure payment by </span>
+          <span style={{ color:"#635bff", fontWeight:800, fontSize:12 }}>Stripe</span>
+          <span style={{ color:"#94a3b8", fontSize:12 }}> · Cancel anytime</span>
+        </div>
+
+        <button onClick={onBack} style={{ width:"100%", background:"none", border:"none", color:"#94a3b8", fontSize:13, cursor:"pointer", marginTop:12, padding:"8px" }}>
+          ← Back to sign in
+        </button>
+      </div>
+
+      <div style={{ color:"rgba(255,255,255,0.4)", fontSize:11, marginTop:24, textAlign:"center" }}>
+        Already have an account? Sign in with your broker code above.
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREEN 1 — AUTH
 // ─────────────────────────────────────────────────────────────────────────────
