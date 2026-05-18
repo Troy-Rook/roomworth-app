@@ -439,6 +439,7 @@ function PaywallScreen({ email, onSuccess, onBack }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function AuthScreen({ onLogin }) {
   const [mode, setMode]             = useState("signup");
+  const [showPaywall, setShowPaywall] = useState(false);
   const [step, setStep]             = useState(1);
   const [brokerCode, setBrokerCode] = useState("");
   const [brokerInfo, setBrokerInfo] = useState(null);
