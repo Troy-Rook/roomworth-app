@@ -320,7 +320,7 @@ function RoomSelectorAdd({ properties, onAdd, onScanAnother }) {
 
 
 // ── Paywall Screen ────────────────────────────────────────────────────────────
-function PaywallScreen({ email, onSuccess, onBack }) {
+function PaywallScreen({ email, firstName, lastName, onSuccess, onBack }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -328,7 +328,18 @@ function PaywallScreen({ email, onSuccess, onBack }) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("payment") === "success") {
-      onSuccess();
+      window.history.replaceState({}, document.title, "/");
+      // Restore user details from before Stripe redirect
+      const pending = sessionStorage.getItem("rw_pending_user");
+      if (pending) {
+        try {
+          const u = JSON.parse(pending);
+          sessionStorage.removeItem("rw_pending_user");
+          onSuccess(u);
+        } catch(e) { onSuccess(null); }
+      } else {
+        onSuccess(null);
+      }
     }
   }, []);
 
@@ -336,6 +347,10 @@ function PaywallScreen({ email, onSuccess, onBack }) {
     setLoading(true);
     setError(null);
     try {
+      // Save signup details so we can restore after Stripe redirect
+      sessionStorage.setItem("rw_pending_user", JSON.stringify({
+        email, firstName, lastName, brokerCode: "ROOMWORTH26"
+      }));
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -346,9 +361,11 @@ function PaywallScreen({ email, onSuccess, onBack }) {
         window.location.href = data.url;
       } else {
         setError(data.error || "Something went wrong. Please try again.");
+        sessionStorage.removeItem("rw_pending_user");
       }
     } catch (e) {
       setError("Connection error. Please try again.");
+      sessionStorage.removeItem("rw_pending_user");
     }
     setLoading(false);
   };
@@ -384,7 +401,7 @@ function PaywallScreen({ email, onSuccess, onBack }) {
             <span style={{ color:"#1B3A6B", fontWeight:900, fontSize:52, lineHeight:1 }}>20</span>
             <span style={{ color:"#64748b", fontWeight:600, fontSize:16, marginTop:16 }}>/year</span>
           </div>
-          <div style={{ color:"#94a3b8", fontSize:12, marginTop:4 }}>One-off annual payment · Renews yearly</div>
+          <div style={{ color:"#94a3b8", fontSize:12, marginTop:4 }}>One-off annual payment</div>
         </div>
 
         {/* Features */}
@@ -494,7 +511,12 @@ function AuthScreen({ onLogin }) {
   if (showPaywall) return (
     <PaywallScreen
       email={email.trim()}
-      onSuccess={()=>{ onLogin({ firstName:firstName.trim(), lastName:lastName.trim(), email:email.trim(), broker:brokerInfo }); }}
+      firstName={firstName.trim()}
+      lastName={lastName.trim()}
+      onSuccess={(u)=>{
+        const userData = u || { firstName:firstName.trim(), lastName:lastName.trim(), email:email.trim() };
+        onLogin({ ...userData, broker:brokerInfo||BROKER_CODES["ROOMWORTH26"] });
+      }}
       onBack={()=>setShowPaywall(false)}
     />
   );
