@@ -321,7 +321,6 @@ function RoomSelectorAdd({ properties, onAdd, onScanAnother }) {
 
 // ── Paywall Screen ────────────────────────────────────────────────────────────
 function PaywallScreen({ email, onSuccess, onBack }) {
-  const [showPaywall, setShowPaywall] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -440,6 +439,7 @@ function PaywallScreen({ email, onSuccess, onBack }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function AuthScreen({ onLogin }) {
   const [mode, setMode]             = useState("signup");
+  const [showPaywall, setShowPaywall] = useState(false);
   const [step, setStep]             = useState(1);
   const [brokerCode, setBrokerCode] = useState("");
   const [brokerInfo, setBrokerInfo] = useState(null);
