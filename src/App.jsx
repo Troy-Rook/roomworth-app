@@ -325,23 +325,7 @@ function PaywallScreen({ email, firstName, lastName, onSuccess, onBack }) {
   const [error, setError] = useState(null);
 
   // Check if returning from successful payment
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("payment") === "success") {
-      window.history.replaceState({}, document.title, "/");
-      // Restore user details from before Stripe redirect
-      const pending = sessionStorage.getItem("rw_pending_user");
-      if (pending) {
-        try {
-          const u = JSON.parse(pending);
-          sessionStorage.removeItem("rw_pending_user");
-          onSuccess(u);
-        } catch(e) { onSuccess(null); }
-      } else {
-        onSuccess(null);
-      }
-    }
-  }, []);
+  // Check OUTSIDE component if returning from Stripe - do this at app level instead
 
   const handleCheckout = async () => {
     setLoading(true);
@@ -2169,6 +2153,48 @@ export default function RoomWorthApp() {
   const [reportConfig, setReportConfig]     = useState(null);
   const [activeTab, setActiveTab]     = useState("properties");
   const [dbLoading, setDbLoading]     = useState(false);
+
+  // Handle Stripe payment success redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "success") {
+      window.history.replaceState({}, document.title, "/");
+      const pending = sessionStorage.getItem("rw_pending_user");
+      if (pending) {
+        try {
+          const u = JSON.parse(pending);
+          sessionStorage.removeItem("rw_pending_user");
+          handleLogin({
+            firstName: u.firstName,
+            lastName: u.lastName,
+            email: u.email,
+            broker: BROKER_CODES[u.brokerCode] || BROKER_CODES["ROOMWORTH26"]
+          });
+        } catch(e) { console.error("Payment restore error:", e); }
+      }
+    }
+  }, []);
+
+  // Handle Stripe payment success
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "success") {
+      window.history.replaceState({}, document.title, "/");
+      const pending = sessionStorage.getItem("rw_pending_user");
+      if (pending) {
+        try {
+          const u = JSON.parse(pending);
+          sessionStorage.removeItem("rw_pending_user");
+          handleLogin({
+            firstName: u.firstName,
+            lastName: u.lastName,
+            email: u.email,
+            broker: BROKER_CODES[u.brokerCode] || BROKER_CODES["ROOMWORTH26"]
+          });
+        } catch(e) { console.error("Payment restore error:", e); }
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
