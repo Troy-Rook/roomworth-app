@@ -353,13 +353,7 @@ function PaywallScreen({ email, onSuccess, onBack }) {
     setLoading(false);
   };
 
-  if (showPaywall) return (
-    <PaywallScreen
-      email={email.trim()}
-      onSuccess={()=>{ onLogin({ firstName:firstName.trim(), lastName:lastName.trim(), email:email.trim(), broker }); }}
-      onBack={()=>setShowPaywall(false)}
-    />
-  );
+  // paywall handled below
 
   return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#0f1e3d,#1B3A6B,#1e4d8c)", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"24px" }}>
