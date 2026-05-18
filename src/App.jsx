@@ -321,6 +321,7 @@ function RoomSelectorAdd({ properties, onAdd, onScanAnother }) {
 
 // ── Paywall Screen ────────────────────────────────────────────────────────────
 function PaywallScreen({ email, onSuccess, onBack }) {
+  const [showPaywall, setShowPaywall] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
