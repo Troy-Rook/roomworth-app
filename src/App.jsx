@@ -321,7 +321,6 @@ function RoomSelectorAdd({ properties, onAdd, onScanAnother }) {
 
 // ── Paywall Screen ────────────────────────────────────────────────────────────
 function PaywallScreen({ email, onSuccess, onBack }) {
-  const [showPaywall, setShowPaywall] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -471,6 +470,7 @@ function AuthScreen({ onLogin }) {
 
   const handleSignUp = () => {
     if (!firstName.trim()||!lastName.trim()||!email.trim()||password.length<8) return;
+    if (brokerInfo && brokerInfo.code === "ROOMWORTH26") { setShowPaywall(true); return; }
     setLoading(true);
     setTimeout(() => {
       onLogin({ firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim(), broker: brokerInfo });
@@ -496,8 +496,16 @@ function AuthScreen({ onLogin }) {
     setLoading(false);
   };
 
+  if (showPaywall) return (
+    <PaywallScreen
+      email={email.trim()}
+      onSuccess={()=>{ onLogin({ firstName:firstName.trim(), lastName:lastName.trim(), email:email.trim(), broker:brokerInfo }); }}
+      onBack={()=>setShowPaywall(false)}
+    />
+  );
+
   return (
-    <div style={{ minHeight:"100vh", background:"white", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif", display:"flex", flexDirection:"column" }}>
+    <div style={{ minHeight:"100vh", background:"white", fontFamily:"white", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif", display:"flex", flexDirection:"column" }}>
       <div style={{ background:"linear-gradient(135deg,#1B3A6B,#1e4d8c,#4AABBF)", padding:"52px 24px 72px", position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", top:-40, right:-40, width:180, height:180, borderRadius:"50%", background:"rgba(74,171,191,0.15)" }} />
         <div style={{ position:"absolute", bottom:-20, left:-20, width:110, height:110, borderRadius:"50%", background:"rgba(255,255,255,0.05)" }} />
