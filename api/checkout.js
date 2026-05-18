@@ -18,7 +18,7 @@ export default async function handler(req, res) {
       },
       body: new URLSearchParams({
         'payment_method_types[]': 'card',
-        'mode': 'subscription',
+        'mode': 'payment',
         'customer_email': email,
         'line_items[0][price]': priceId,
         'line_items[0][quantity]': '1',

@@ -373,18 +373,18 @@ function PaywallScreen({ email, onSuccess, onBack }) {
             <span style={{ color:"white", fontWeight:700, fontSize:12, textTransform:"uppercase", letterSpacing:"0.8px" }}>Room Worth Direct</span>
           </div>
           <div style={{ color:"#1B3A6B", fontWeight:900, fontSize:22, marginBottom:6 }}>Start your contents inventory</div>
-          <div style={{ color:"#64748b", fontSize:14, lineHeight:1.5 }}>Know exactly what your home contents are worth — powered by A.I.</div>
+          <div style={{ color:"#64748b", fontSize:14, lineHeight:1.5 }}>Estimate what your home contents are worth — powered by A.I.</div>
         </div>
 
         {/* Price */}
         <div style={{ background:"linear-gradient(135deg,#f0f5ff,#e8f1f8)", borderRadius:18, padding:"20px", textAlign:"center", marginBottom:24 }}>
-          <div style={{ color:"#64748b", fontSize:13, fontWeight:600, marginBottom:4 }}>Monthly subscription</div>
+          <div style={{ color:"#64748b", fontSize:13, fontWeight:600, marginBottom:4 }}>Annual subscription</div>
           <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"center", gap:4 }}>
             <span style={{ color:"#1B3A6B", fontWeight:700, fontSize:20, marginTop:8 }}>£</span>
             <span style={{ color:"#1B3A6B", fontWeight:900, fontSize:52, lineHeight:1 }}>20</span>
-            <span style={{ color:"#64748b", fontWeight:600, fontSize:16, marginTop:16 }}>/mo</span>
+            <span style={{ color:"#64748b", fontWeight:600, fontSize:16, marginTop:16 }}>/year</span>
           </div>
-          <div style={{ color:"#94a3b8", fontSize:12, marginTop:4 }}>Cancel anytime</div>
+          <div style={{ color:"#94a3b8", fontSize:12, marginTop:4 }}>One-off annual payment · Renews yearly</div>
         </div>
 
         {/* Features */}
@@ -413,7 +413,7 @@ function PaywallScreen({ email, onSuccess, onBack }) {
         {/* CTA */}
         <button onClick={handleCheckout} disabled={loading}
           style={{ width:"100%", background:loading?"#e2e8f0":"linear-gradient(135deg,#1B3A6B,#2563ab)", border:"none", borderRadius:16, padding:"17px", color:loading?"#94a3b8":"white", fontSize:16, fontWeight:800, cursor:loading?"not-allowed":"pointer", marginTop:20, boxShadow:loading?"none":"0 6px 20px rgba(27,58,107,0.3)", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-          {loading ? "Redirecting to payment..." : "Start for £20/month →"}
+          {loading ? "Redirecting to payment..." : "Get started for £20/year →"}
         </button>
 
         <div style={{ textAlign:"center", marginTop:14 }}>
@@ -439,7 +439,6 @@ function PaywallScreen({ email, onSuccess, onBack }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function AuthScreen({ onLogin }) {
   const [mode, setMode]             = useState("signup");
-  const [showPaywall, setShowPaywall] = useState(false);
   const [step, setStep]             = useState(1);
   const [brokerCode, setBrokerCode] = useState("");
   const [brokerInfo, setBrokerInfo] = useState(null);
