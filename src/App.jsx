@@ -2189,26 +2189,28 @@ export default function RoomWorthApp() {
   const [reportConfig, setReportConfig]     = useState(null);
   const [activeTab, setActiveTab]     = useState("properties");
   const [dbLoading, setDbLoading]     = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   // Handle Stripe payment success redirect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("payment") === "success") {
       window.history.replaceState({}, document.title, "/");
+      setPaymentProcessing(true);
       const pending = sessionStorage.getItem("rw_pending_user");
       if (pending) {
         try {
           const u = JSON.parse(pending);
           sessionStorage.removeItem("rw_pending_user");
           // Update subscription in Supabase after payment
-          try {
-            await supabase.from("users").update({
-              subscription_status: "active",
-              subscription_started_at: new Date().toISOString(),
-              subscription_expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
-            }).eq("email", u.email);
-          } catch(e) { console.error("Subscription update error:", e); }
-          handleLogin({
+          const { error: subError } = await supabase.from("users").update({
+            subscription_status: "active",
+            subscription_started_at: new Date().toISOString(),
+            subscription_expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
+          }).eq("email", u.email);
+          if (subError) console.error("Subscription update error:", subError);
+          else console.log("Subscription updated successfully!");
+          await handleLogin({
             firstName: u.firstName,
             lastName: u.lastName,
             email: u.email,
@@ -2216,6 +2218,7 @@ export default function RoomWorthApp() {
           });
         } catch(e) { console.error("Payment restore error:", e); }
       }
+      setPaymentProcessing(false);
     }
   }, []);
 
@@ -2224,20 +2227,21 @@ export default function RoomWorthApp() {
     const params = new URLSearchParams(window.location.search);
     if (params.get("payment") === "success") {
       window.history.replaceState({}, document.title, "/");
+      setPaymentProcessing(true);
       const pending = sessionStorage.getItem("rw_pending_user");
       if (pending) {
         try {
           const u = JSON.parse(pending);
           sessionStorage.removeItem("rw_pending_user");
           // Update subscription in Supabase after payment
-          try {
-            await supabase.from("users").update({
-              subscription_status: "active",
-              subscription_started_at: new Date().toISOString(),
-              subscription_expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
-            }).eq("email", u.email);
-          } catch(e) { console.error("Subscription update error:", e); }
-          handleLogin({
+          const { error: subError } = await supabase.from("users").update({
+            subscription_status: "active",
+            subscription_started_at: new Date().toISOString(),
+            subscription_expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
+          }).eq("email", u.email);
+          if (subError) console.error("Subscription update error:", subError);
+          else console.log("Subscription updated successfully!");
+          await handleLogin({
             firstName: u.firstName,
             lastName: u.lastName,
             email: u.email,
@@ -2245,6 +2249,7 @@ export default function RoomWorthApp() {
           });
         } catch(e) { console.error("Payment restore error:", e); }
       }
+      setPaymentProcessing(false);
     }
   }, []);
 
@@ -2397,6 +2402,14 @@ export default function RoomWorthApp() {
 
   return (
     <div style={{ fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif" }}>
+      {paymentProcessing && (
+        <div style={{ position:"fixed", inset:0, background:"linear-gradient(160deg,#0f1e3d,#1B3A6B)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", zIndex:999 }}>
+          <Logo size={52} />
+          <div style={{ color:"white", fontWeight:900, fontSize:22, marginTop:16, marginBottom:8 }}>Processing payment...</div>
+          <div style={{ color:"rgba(255,255,255,0.7)", fontSize:14, marginBottom:24 }}>Setting up your account</div>
+          <div style={{ width:48, height:48, border:"4px solid rgba(255,255,255,0.2)", borderTopColor:"#4AABBF", borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/>
+        </div>
+      )}
       {screen==="auth"       && <AuthScreen onLogin={handleLogin} />}
       {screen==="expired"    && user && <ExpiredScreen user={user} onLogout={handleLogout} onRenew={()=>setScreen("renew")} />}
       {screen==="renew"      && user && <PaywallScreen email={user.email} firstName={user.firstName} lastName={user.lastName} onSuccess={(u)=>{ handleLogin(u||user); }} onBack={()=>setScreen("expired")} />}
