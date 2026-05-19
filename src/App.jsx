@@ -2202,14 +2202,19 @@ export default function RoomWorthApp() {
         try {
           const u = JSON.parse(pending);
           sessionStorage.removeItem("rw_pending_user");
-          // Update subscription in Supabase after payment
-          const { error: subError } = await supabase.from("users").update({
+          // Upsert user with active subscription after payment
+          const expiresAt = new Date(Date.now() + 30*24*60*60*1000).toISOString();
+          const { error: subError } = await supabase.from("users").upsert({
+            email: u.email,
+            first_name: u.firstName,
+            last_name: u.lastName,
+            broker_code: "ROOMWORTH26",
             subscription_status: "active",
             subscription_started_at: new Date().toISOString(),
-            subscription_expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
-          }).eq("email", u.email);
-          if (subError) console.error("Subscription update error:", subError);
-          else console.log("Subscription updated successfully!");
+            subscription_expires_at: expiresAt
+          }, { onConflict: "email" });
+          if (subError) console.error("Subscription upsert error:", subError);
+          else console.log("Subscription saved!", expiresAt);
           await handleLogin({
             firstName: u.firstName,
             lastName: u.lastName,
@@ -2233,14 +2238,19 @@ export default function RoomWorthApp() {
         try {
           const u = JSON.parse(pending);
           sessionStorage.removeItem("rw_pending_user");
-          // Update subscription in Supabase after payment
-          const { error: subError } = await supabase.from("users").update({
+          // Upsert user with active subscription after payment
+          const expiresAt = new Date(Date.now() + 30*24*60*60*1000).toISOString();
+          const { error: subError } = await supabase.from("users").upsert({
+            email: u.email,
+            first_name: u.firstName,
+            last_name: u.lastName,
+            broker_code: "ROOMWORTH26",
             subscription_status: "active",
             subscription_started_at: new Date().toISOString(),
-            subscription_expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
-          }).eq("email", u.email);
-          if (subError) console.error("Subscription update error:", subError);
-          else console.log("Subscription updated successfully!");
+            subscription_expires_at: expiresAt
+          }, { onConflict: "email" });
+          if (subError) console.error("Subscription upsert error:", subError);
+          else console.log("Subscription saved!", expiresAt);
           await handleLogin({
             firstName: u.firstName,
             lastName: u.lastName,
