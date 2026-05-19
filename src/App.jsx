@@ -675,13 +675,13 @@ function PropertiesScreen({ user, properties, setProperties, onViewProperty, onN
           type: prop.type,
           rebuild_value: prop.rebuildValue,
           recommended_contents: prop.recommendedContents
-        }).select().maybeSingle();
+        }).select().single();
         if (data) {
           // Insert default rooms
           const roomsWithIds = await Promise.all(prop.rooms.map(async (r) => {
             const { data: rData } = await supabase.from("rooms").insert({
               property_id: data.id, name: r.name, type: r.type, color: r.color
-            }).select().maybeSingle();
+            }).select().single();
             return { ...r, id: rData?.id || r.id };
           }));
           const savedProp = { ...prop, id: data.id, rooms: roomsWithIds };
@@ -935,7 +935,7 @@ function RoomsScreen({ property, onUpdateProperty, onBack, onScanItem, onViewRep
         name: room.name,
         type: room.type,
         color: room.color
-      }).select().maybeSingle();
+      }).select().single();
       console.log("Room save result:", data, error);
       // Use the Supabase UUID as the room id
       const savedRoom = data ? { ...room, id: data.id, items: [] } : room;
@@ -2306,7 +2306,7 @@ export default function RoomWorthApp() {
           subscription_status: isDirectClient ? "active" : "active",
           subscription_started_at: new Date().toISOString(),
           subscription_expires_at: isDirectClient ? new Date(Date.now() + 30*24*60*60*1000).toISOString() : null
-        }).select().maybeSingle();
+        }).select().single();
         existing = newUser;
       }
 
@@ -2383,12 +2383,12 @@ export default function RoomWorthApp() {
         const { data } = await supabase.from("properties").insert({
           user_id: user.id, name: prop.name, address: prop.address, type: prop.type,
           rebuild_value: prop.rebuildValue, recommended_contents: prop.recommendedContents
-        }).select().maybeSingle();
+        }).select().single();
         if (data) {
           const roomsWithIds = await Promise.all(prop.rooms.map(async (r) => {
             const { data: rData } = await supabase.from("rooms").insert({
               property_id: data.id, name: r.name, type: r.type, color: r.color
-            }).select().maybeSingle();
+            }).select().single();
             return { ...r, id: rData?.id || r.id };
           }));
           const savedProp = { ...prop, id: data.id, rooms: roomsWithIds };
