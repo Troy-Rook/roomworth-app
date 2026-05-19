@@ -514,7 +514,7 @@ function AuthScreen({ onLogin }) {
     if (!email.trim()||!password.trim()) return;
     setLoading(true);
     try {
-      const { data: dbUser } = await supabase.from("users").select("first_name,last_name,broker_code").eq("email", email.trim()).single();
+      const { data: dbUser } = await supabase.from("users").select("first_name,last_name,broker_code").eq("email", email.trim()).maybeSingle();
       const brokerCode = dbUser?.broker_code || "ROOMWORTH26";
       onLogin({ 
         firstName: dbUser?.first_name || email.trim().split("@")[0], 
@@ -2197,7 +2197,7 @@ export default function RoomWorthApp() {
     if (params.get("payment") === "success") {
       window.history.replaceState({}, document.title, "/");
       setPaymentProcessing(true);
-      const pending = sessionStorage.getItem("rw_pending_user"); console.log("Payment return - pending data:", pending);
+      const pending = sessionStorage.getItem("rw_pending_user");
       if (pending) {
         try {
           const u = JSON.parse(pending);
@@ -2293,7 +2293,7 @@ export default function RoomWorthApp() {
   const handleLogin = async (userData) => {
     try {
       let { data: existing } = await supabase
-        .from("users").select("*").eq("email", userData.email).single();
+        .from("users").select("*").eq("email", userData.email).maybeSingle();
       if (!existing) {
         // New user — create with 30 day access if ROOMWORTH26
         const brokerCode = userData.broker?.code || "ROOMWORTH26";
