@@ -2197,7 +2197,7 @@ export default function RoomWorthApp() {
     if (params.get("payment") === "success") {
       window.history.replaceState({}, document.title, "/");
       setPaymentProcessing(true);
-      const pending = sessionStorage.getItem("rw_pending_user");
+      const pending = sessionStorage.getItem("rw_pending_user"); console.log("Payment return - pending data:", pending);
       if (pending) {
         try {
           const u = JSON.parse(pending);
