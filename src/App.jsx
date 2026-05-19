@@ -379,13 +379,13 @@ function PaywallScreen({ email, firstName, lastName, onSuccess, onBack }) {
 
         {/* Price */}
         <div style={{ background:"linear-gradient(135deg,#f0f5ff,#e8f1f8)", borderRadius:18, padding:"20px", textAlign:"center", marginBottom:24 }}>
-          <div style={{ color:"#64748b", fontSize:13, fontWeight:600, marginBottom:4 }}>Annual subscription</div>
+          <div style={{ color:"#64748b", fontSize:13, fontWeight:600, marginBottom:4 }}>30 day access</div>
           <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"center", gap:4 }}>
             <span style={{ color:"#1B3A6B", fontWeight:700, fontSize:20, marginTop:8 }}>£</span>
             <span style={{ color:"#1B3A6B", fontWeight:900, fontSize:52, lineHeight:1 }}>20</span>
-            <span style={{ color:"#64748b", fontWeight:600, fontSize:16, marginTop:16 }}>/year</span>
+            <span style={{ color:"#64748b", fontWeight:600, fontSize:16, marginTop:16 }}>/30 days</span>
           </div>
-          <div style={{ color:"#94a3b8", fontSize:12, marginTop:4 }}>One-off annual payment</div>
+          <div style={{ color:"#94a3b8", fontSize:12, marginTop:4 }}>One-off payment · 30 days full access</div>
         </div>
 
         {/* Features */}
@@ -395,7 +395,7 @@ function PaywallScreen({ email, firstName, lastName, onSuccess, onBack }) {
           "Professional broker reports",
           "Specialist item detection",
           "Secure cloud storage",
-          "Annual revaluation reminders",
+          "30 days full access to all features",
         ].map((feature, i) => (
           <div key={i} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
             <div style={{ width:20, height:20, borderRadius:"50%", background:"linear-gradient(135deg,#4AABBF,#0891b2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
@@ -414,13 +414,12 @@ function PaywallScreen({ email, firstName, lastName, onSuccess, onBack }) {
         {/* CTA */}
         <button onClick={handleCheckout} disabled={loading}
           style={{ width:"100%", background:loading?"#e2e8f0":"linear-gradient(135deg,#1B3A6B,#2563ab)", border:"none", borderRadius:16, padding:"17px", color:loading?"#94a3b8":"white", fontSize:16, fontWeight:800, cursor:loading?"not-allowed":"pointer", marginTop:20, boxShadow:loading?"none":"0 6px 20px rgba(27,58,107,0.3)", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-          {loading ? "Redirecting to payment..." : "Get started for £20/year →"}
+          {loading ? "Redirecting to payment..." : "Get 30 days access for £20 →"}
         </button>
 
         <div style={{ textAlign:"center", marginTop:14 }}>
           <span style={{ color:"#94a3b8", fontSize:12 }}>Secure payment by </span>
           <span style={{ color:"#635bff", fontWeight:800, fontSize:12 }}>Stripe</span>
-          <span style={{ color:"#94a3b8", fontSize:12 }}> · Cancel anytime</span>
         </div>
 
         <button onClick={onBack} style={{ width:"100%", background:"none", border:"none", color:"#94a3b8", fontSize:13, cursor:"pointer", marginTop:12, padding:"8px" }}>
