@@ -434,6 +434,43 @@ function PaywallScreen({ email, firstName, lastName, onSuccess, onBack }) {
   );
 }
 
+
+// ── Expired Screen ────────────────────────────────────────────────────────────
+function ExpiredScreen({ user, onRenew, onLogout }) {
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#0f1e3d,#1B3A6B,#1e4d8c)", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"24px" }}>
+      <Logo size={52} />
+      <div style={{ color:"white", fontWeight:900, fontSize:28, letterSpacing:"-0.5px", marginTop:12, marginBottom:4 }}>ROOM WORTH</div>
+      <div style={{ color:"#4AABBF", fontWeight:600, fontSize:14, marginBottom:32 }}>Contents Estimator</div>
+
+      <div style={{ background:"white", borderRadius:24, padding:"32px 28px", width:"100%", maxWidth:400, boxShadow:"0 20px 60px rgba(0,0,0,0.3)", textAlign:"center" }}>
+        <div style={{ width:64, height:64, borderRadius:"50%", background:"#fef2f2", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
+          <SvgIcon name="privacy" size={28} color="#dc2626"/>
+        </div>
+        <div style={{ color:"#1B3A6B", fontWeight:900, fontSize:22, marginBottom:8 }}>Your access has expired</div>
+        <div style={{ color:"#64748b", fontSize:14, lineHeight:1.6, marginBottom:24 }}>
+          Your 30-day access period has ended. Renew now to continue accessing your contents inventory and reports.
+        </div>
+
+        <div style={{ background:"#f0f9ff", border:"1px solid #bae6fd", borderRadius:14, padding:"14px 16px", marginBottom:24, textAlign:"left" }}>
+          <div style={{ color:"#0369a1", fontSize:13, fontWeight:700, marginBottom:4 }}>Your data is safe! 🔒</div>
+          <div style={{ color:"#0369a1", fontSize:12, lineHeight:1.5 }}>All your properties, rooms and scanned items are securely stored and will be available immediately when you renew.</div>
+        </div>
+
+        <button onClick={onRenew}
+          style={{ width:"100%", background:"linear-gradient(135deg,#1B3A6B,#2563ab)", border:"none", borderRadius:16, padding:"17px", color:"white", fontSize:16, fontWeight:800, cursor:"pointer", boxShadow:"0 6px 20px rgba(27,58,107,0.3)", marginBottom:12 }}>
+          Renew for £20 — 30 days access →
+        </button>
+
+        <button onClick={onLogout}
+          style={{ width:"100%", background:"none", border:"1px solid #e2e8f0", borderRadius:16, padding:"13px", color:"#64748b", fontSize:14, fontWeight:600, cursor:"pointer" }}>
+          Sign out
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREEN 1 — AUTH
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2163,6 +2200,14 @@ export default function RoomWorthApp() {
         try {
           const u = JSON.parse(pending);
           sessionStorage.removeItem("rw_pending_user");
+          // Update subscription in Supabase after payment
+          try {
+            await supabase.from("users").update({
+              subscription_status: "active",
+              subscription_started_at: new Date().toISOString(),
+              subscription_expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
+            }).eq("email", u.email);
+          } catch(e) { console.error("Subscription update error:", e); }
           handleLogin({
             firstName: u.firstName,
             lastName: u.lastName,
@@ -2184,6 +2229,14 @@ export default function RoomWorthApp() {
         try {
           const u = JSON.parse(pending);
           sessionStorage.removeItem("rw_pending_user");
+          // Update subscription in Supabase after payment
+          try {
+            await supabase.from("users").update({
+              subscription_status: "active",
+              subscription_started_at: new Date().toISOString(),
+              subscription_expires_at: new Date(Date.now() + 30*24*60*60*1000).toISOString()
+            }).eq("email", u.email);
+          } catch(e) { console.error("Subscription update error:", e); }
           handleLogin({
             firstName: u.firstName,
             lastName: u.lastName,
@@ -2227,16 +2280,39 @@ export default function RoomWorthApp() {
       let { data: existing } = await supabase
         .from("users").select("*").eq("email", userData.email).single();
       if (!existing) {
+        // New user — create with 30 day access if ROOMWORTH26
+        const brokerCode = userData.broker?.code || "ROOMWORTH26";
+        const isDirectClient = brokerCode === "ROOMWORTH26";
         const { data: newUser } = await supabase.from("users").insert({
           email: userData.email,
           first_name: userData.firstName,
           last_name: userData.lastName,
-          broker_code: userData.broker?.code || "ROOMWORTH26"
+          broker_code: brokerCode,
+          subscription_status: isDirectClient ? "active" : "active",
+          subscription_started_at: new Date().toISOString(),
+          subscription_expires_at: isDirectClient ? new Date(Date.now() + 30*24*60*60*1000).toISOString() : null
         }).select().single();
         existing = newUser;
-        setUser({ ...userData, id: existing?.id });
-      } else {
-        setUser({ ...userData, id: existing.id, firstName: existing.first_name || userData.firstName, lastName: existing.last_name || userData.lastName });
+      }
+
+      const userObj = {
+        ...userData,
+        id: existing?.id,
+        firstName: existing?.first_name || userData.firstName,
+        lastName: existing?.last_name || userData.lastName,
+        subscriptionStatus: existing?.subscription_status,
+        subscriptionExpiresAt: existing?.subscription_expires_at,
+        brokerCode: existing?.broker_code,
+      };
+      setUser(userObj);
+
+      // Check if expired (only for ROOMWORTH26 direct clients)
+      if (existing?.broker_code === "ROOMWORTH26" && existing?.subscription_expires_at) {
+        const expired = new Date(existing.subscription_expires_at) < new Date();
+        if (expired) {
+          setScreen("expired");
+          return;
+        }
       }
     } catch(e) {
       setUser({ ...userData, id: null });
@@ -2244,7 +2320,7 @@ export default function RoomWorthApp() {
     setScreen("properties"); setActiveTab("properties");
   };
 
-  const handleLogout = () => { setUser(null); setScreen("auth"); setProperties([]); setActiveProperty(null); };
+  const handleLogout = () => { setUser(null); setScreen("auth"); setProperties([]); setActiveProperty(null); setScanTargetRoom(null); };
 
   const handleViewProperty = (prop) => {
     const latest = properties.find(p => p.id === prop.id) || prop;
@@ -2322,6 +2398,8 @@ export default function RoomWorthApp() {
   return (
     <div style={{ fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif" }}>
       {screen==="auth"       && <AuthScreen onLogin={handleLogin} />}
+      {screen==="expired"    && user && <ExpiredScreen user={user} onLogout={handleLogout} onRenew={()=>setScreen("renew")} />}
+      {screen==="renew"      && user && <PaywallScreen email={user.email} firstName={user.firstName} lastName={user.lastName} onSuccess={(u)=>{ handleLogin(u||user); }} onBack={()=>setScreen("expired")} />}
       {screen==="properties" && user && <PropertiesScreen user={user} properties={properties} setProperties={setProperties} saveProperty={saveProperty} onViewProperty={handleViewProperty} onNavigate={handleNavigate} />}
       {screen==="rooms"      && activeProperty && <RoomsScreen property={properties.find(p=>p.id===activeProperty.id)||activeProperty} onUpdateProperty={handleUpdateProperty} onBack={()=>setScreen("properties")} onScanItem={handleScanItem} onViewReport={handleViewReport} onNavigate={handleNavigate} />}
       {screen==="scanner"    && <ScannerScreen user={user} targetRoom={scanTargetRoom} properties={properties} onBack={()=>activeProperty?setScreen("rooms"):setScreen("properties")} onItemScanned={handleItemScanned} onNavigate={handleNavigate} />}
