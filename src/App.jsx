@@ -2193,8 +2193,9 @@ export default function RoomWorthApp() {
 
   // Handle Stripe payment success redirect
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("payment") === "success") {
+    const run = async () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("payment") !== "success") return;
       window.history.replaceState({}, document.title, "/");
       setPaymentProcessing(true);
       const pending = sessionStorage.getItem("rw_pending_user");
@@ -2202,7 +2203,6 @@ export default function RoomWorthApp() {
         try {
           const u = JSON.parse(pending);
           sessionStorage.removeItem("rw_pending_user");
-          // Upsert user with active subscription after payment
           const expiresAt = new Date(Date.now() + 30*24*60*60*1000).toISOString();
           const { error: subError } = await supabase.from("users").upsert({
             email: u.email,
@@ -2224,7 +2224,8 @@ export default function RoomWorthApp() {
         } catch(e) { console.error("Payment restore error:", e); }
       }
       setPaymentProcessing(false);
-    }
+    };
+    run();
   }, []);
 
   // Handle Stripe payment success
