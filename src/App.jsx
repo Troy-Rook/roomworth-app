@@ -762,17 +762,24 @@ function PropertiesScreen({ user, properties, setProperties, onViewProperty, onN
                   <input type="file" accept="image/*" style={{ display:"none" }} onChange={async(e)=>{
                     const file = e.target.files[0];
                     if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = async(ev) => {
-                      const photo = ev.target.result;
-                      const updated = {...p, photo};
-                      saveProperty(updated);
-                      // Save to Supabase
+                    const img = new Image();
+                    const url = URL.createObjectURL(file);
+                    img.onload = async () => {
+                      const canvas = document.createElement('canvas');
+                      const maxW = 800;
+                      const scale = Math.min(1, maxW / img.width);
+                      canvas.width = img.width * scale;
+                      canvas.height = img.height * scale;
+                      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                      const photo = canvas.toDataURL('image/jpeg', 0.7);
+                      URL.revokeObjectURL(url);
+                      setProperties(prev => prev.map(prop => prop.id===p.id ? {...prop, photo} : prop));
                       try {
                         await supabase.from("properties").update({ photo }).eq("id", p.id);
+                        console.log("Photo saved!");
                       } catch(err) { console.error("Photo save error:", err); }
                     };
-                    reader.readAsDataURL(file);
+                    img.src = url;
                   }} />
                 </label>
                 <div style={{ position:"absolute", top:10, left:12, background:"rgba(27,58,107,0.8)", color:"white", borderRadius:20, padding:"4px 11px", fontSize:10, fontWeight:700 }}>{p.type}</div>
@@ -1764,6 +1771,7 @@ function ReportViewer({ type, property, onBack }) {
       <div style={{ maxWidth:680, margin:"0 auto", padding:"20px 14px 60px" }}>
         {/* Header */}
         <div style={{ background:"linear-gradient(135deg,#1B3A6B,#1e4d8c)", borderRadius:22, padding:"24px", marginBottom:14, boxShadow:"0 8px 28px rgba(27,58,107,0.2)", position:"relative", overflow:"hidden" }}>
+          {property.photo && <img src={property.photo} alt={property.name} style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", opacity:0.2, borderRadius:22 }} />}
           <div style={{ position:"absolute", top:-30, right:-30, width:150, height:150, borderRadius:"50%", background:"rgba(74,171,191,0.12)" }} />
           <div style={{ position:"relative", zIndex:1 }}>
             <div style={{ display:"flex", alignItems:"center", gap:13, marginBottom:18, paddingBottom:14, borderBottom:"1px solid rgba(255,255,255,0.1)" }}>
@@ -2253,6 +2261,7 @@ export default function RoomWorthApp() {
   }, []);
 
 
+
   useEffect(() => {
     if (!user?.id) return;
     loadProperties(user.id);
@@ -2273,7 +2282,7 @@ export default function RoomWorthApp() {
           return { ...r, id: r.id, items: (items || []).map(i => ({...i, qty: i.qty||1, value: i.value||0})) };
         }));
         const currentContents = fullRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0);
-        return { ...p, id: p.id, rooms: fullRooms, currentContents, recommendedContents: p.recommended_contents, rebuildValue: p.rebuild_value, photo: p.photo||null };
+        return { ...p, id: p.id, rooms: fullRooms, currentContents, recommendedContents: p.recommended_contents, rebuildValue: p.rebuild_value, photo: p.photo || null };
       }));
       setProperties(fullProps);
     } catch(e) { console.error("Load error:", e); }
