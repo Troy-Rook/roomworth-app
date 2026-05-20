@@ -2252,6 +2252,41 @@ export default function RoomWorthApp() {
     run();
   }, []);
 
+  // Handle Stripe payment success
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "success") {
+      window.history.replaceState({}, document.title, "/");
+      setPaymentProcessing(true);
+      const pending = sessionStorage.getItem("rw_pending_user");
+      if (pending) {
+        try {
+          const u = JSON.parse(pending);
+          sessionStorage.removeItem("rw_pending_user");
+          // Upsert user with active subscription after payment
+          const expiresAt = new Date(Date.now() + 30*24*60*60*1000).toISOString();
+          const { error: subError } = await supabase.from("users").upsert({
+            email: u.email,
+            first_name: u.firstName,
+            last_name: u.lastName,
+            broker_code: "ROOMWORTH26",
+            subscription_status: "active",
+            subscription_started_at: new Date().toISOString(),
+            subscription_expires_at: expiresAt
+          }, { onConflict: "email" });
+          if (subError) console.error("Subscription upsert error:", subError);
+          else console.log("Subscription saved!", expiresAt);
+          await handleLogin({
+            firstName: u.firstName,
+            lastName: u.lastName,
+            email: u.email,
+            broker: BROKER_CODES[u.brokerCode] || BROKER_CODES["ROOMWORTH26"]
+          });
+        } catch(e) { console.error("Payment restore error:", e); }
+      }
+      setPaymentProcessing(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -2430,7 +2465,13 @@ export default function RoomWorthApp() {
         button:active{transform:scale(0.97)}
         *{-webkit-tap-highlight-color:transparent}
         textarea{font-family:inherit}
-        @media print{.no-print{display:none!important}}
+        @media print{
+          .no-print{display:none!important}
+          *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+        }
+        @media screen{
+          * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
       `}</style>
     </div>
   );
