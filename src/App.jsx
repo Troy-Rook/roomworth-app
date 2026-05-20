@@ -2194,8 +2194,8 @@ export default function RoomWorthApp() {
 
   // Handle Stripe payment success
   useEffect(() => {
+    const run = async () => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("payment") === "success") {
       window.history.replaceState({}, document.title, "/");
       setPaymentProcessing(true);
       const pending = sessionStorage.getItem("rw_pending_user");
@@ -2226,6 +2226,8 @@ export default function RoomWorthApp() {
       }
       setPaymentProcessing(false);
     }
+    };
+    run();
   }, []);
 
   useEffect(() => {
