@@ -2273,7 +2273,7 @@ export default function RoomWorthApp() {
           return { ...r, id: r.id, items: (items || []).map(i => ({...i, qty: i.qty||1, value: i.value||0})) };
         }));
         const currentContents = fullRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0);
-        return { ...p, id: p.id, rooms: fullRooms, currentContents, recommendedContents: p.recommended_contents, rebuildValue: p.rebuild_value };
+        return { ...p, id: p.id, rooms: fullRooms, currentContents, recommendedContents: p.recommended_contents, rebuildValue: p.rebuild_value, photo: p.photo||null };
       }));
       setProperties(fullProps);
     } catch(e) { console.error("Load error:", e); }
