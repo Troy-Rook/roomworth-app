@@ -2195,7 +2195,8 @@ export default function RoomWorthApp() {
   // Handle Stripe payment success
   useEffect(() => {
     const run = async () => {
-    const params = new URLSearchParams(window.location.search);
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("payment") !== "success") return;
       window.history.replaceState({}, document.title, "/");
       setPaymentProcessing(true);
       const pending = sessionStorage.getItem("rw_pending_user");
@@ -2203,29 +2204,12 @@ export default function RoomWorthApp() {
         try {
           const u = JSON.parse(pending);
           sessionStorage.removeItem("rw_pending_user");
-          // Upsert user with active subscription after payment
           const expiresAt = new Date(Date.now() + 30*24*60*60*1000).toISOString();
-          const { error: subError } = await supabase.from("users").upsert({
-            email: u.email,
-            first_name: u.firstName,
-            last_name: u.lastName,
-            broker_code: "ROOMWORTH26",
-            subscription_status: "active",
-            subscription_started_at: new Date().toISOString(),
-            subscription_expires_at: expiresAt
-          }, { onConflict: "email" });
-          if (subError) console.error("Subscription upsert error:", subError);
-          else console.log("Subscription saved!", expiresAt);
-          await handleLogin({
-            firstName: u.firstName,
-            lastName: u.lastName,
-            email: u.email,
-            broker: BROKER_CODES[u.brokerCode] || BROKER_CODES["ROOMWORTH26"]
-          });
-        } catch(e) { console.error("Payment restore error:", e); }
+          await supabase.from("users").upsert({ email:u.email, first_name:u.firstName, last_name:u.lastName, broker_code:"ROOMWORTH26", subscription_status:"active", subscription_started_at:new Date().toISOString(), subscription_expires_at:expiresAt },{ onConflict:"email" });
+          await handleLogin({ firstName:u.firstName, lastName:u.lastName, email:u.email, broker:BROKER_CODES[u.brokerCode]||BROKER_CODES["ROOMWORTH26"] });
+        } catch(e) { console.error("Payment error:",e); }
       }
       setPaymentProcessing(false);
-    }
     };
     run();
   }, []);
