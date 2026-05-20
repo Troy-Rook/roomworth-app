@@ -746,11 +746,35 @@ function PropertiesScreen({ user, properties, setProperties, onViewProperty, onN
           const pc = progressColor(pct);
           return (
             <div key={p.id} style={{ background:"white", borderRadius:22, overflow:"hidden", boxShadow:"0 3px 18px rgba(27,58,107,0.08)", border:"1px solid #e8eef5", marginBottom:14 }}>
-              <div style={{ height:120, background:"linear-gradient(135deg,#f0f5fb,#e8f1f8)", display:"flex", alignItems:"center", justifyContent:"center", position:"relative" }}>
-                <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
-                  <Logo size={44} />
-                  <div style={{ color:"#94a3b8", fontSize:10, fontWeight:600 }}>No photo</div>
-                </div>
+              <div style={{ height:140, background:"linear-gradient(135deg,#f0f5fb,#e8f1f8)", display:"flex", alignItems:"center", justifyContent:"center", position:"relative", overflow:"hidden" }}>
+                {p.photo ? (
+                  <img src={p.photo} alt={p.name} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                ) : (
+                  <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
+                    <Logo size={44} />
+                    <div style={{ color:"#94a3b8", fontSize:10, fontWeight:600 }}>No photo</div>
+                  </div>
+                )}
+                {/* Photo upload button */}
+                <label style={{ position:"absolute", bottom:8, right:48, background:"rgba(27,58,107,0.85)", borderRadius:20, padding:"5px 10px", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+                  <SvgIcon name="camera" size={12} color="white"/>
+                  <span style={{ color:"white", fontSize:10, fontWeight:700 }}>{p.photo?"Change":"Add Photo"}</span>
+                  <input type="file" accept="image/*" style={{ display:"none" }} onChange={async(e)=>{
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = async(ev) => {
+                      const photo = ev.target.result;
+                      const updated = {...p, photo};
+                      saveProperty(updated);
+                      // Save to Supabase
+                      try {
+                        await supabase.from("properties").update({ photo }).eq("id", p.id);
+                      } catch(err) { console.error("Photo save error:", err); }
+                    };
+                    reader.readAsDataURL(file);
+                  }} />
+                </label>
                 <div style={{ position:"absolute", top:10, left:12, background:"rgba(27,58,107,0.8)", color:"white", borderRadius:20, padding:"4px 11px", fontSize:10, fontWeight:700 }}>{p.type}</div>
                 <div style={{ position:"absolute", top:8, right:8 }}>
                   <button onClick={()=>setMenuProp(menuProp===p.id?null:p.id)} style={{ background:"rgba(255,255,255,0.9)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:16, color:"#1B3A6B", display:"flex", alignItems:"center", justifyContent:"center" }}>⋯</button>
@@ -2191,8 +2215,7 @@ export default function RoomWorthApp() {
   const [dbLoading, setDbLoading]     = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
 
-
-  // Handle Stripe payment success
+  // Handle Stripe payment success redirect
   useEffect(() => {
     const run = async () => {
       const params = new URLSearchParams(window.location.search);
@@ -2205,13 +2228,64 @@ export default function RoomWorthApp() {
           const u = JSON.parse(pending);
           sessionStorage.removeItem("rw_pending_user");
           const expiresAt = new Date(Date.now() + 30*24*60*60*1000).toISOString();
-          await supabase.from("users").upsert({ email:u.email, first_name:u.firstName, last_name:u.lastName, broker_code:"ROOMWORTH26", subscription_status:"active", subscription_started_at:new Date().toISOString(), subscription_expires_at:expiresAt },{ onConflict:"email" });
-          await handleLogin({ firstName:u.firstName, lastName:u.lastName, email:u.email, broker:BROKER_CODES[u.brokerCode]||BROKER_CODES["ROOMWORTH26"] });
-        } catch(e) { console.error("Payment error:",e); }
+          const { error: subError } = await supabase.from("users").upsert({
+            email: u.email,
+            first_name: u.firstName,
+            last_name: u.lastName,
+            broker_code: "ROOMWORTH26",
+            subscription_status: "active",
+            subscription_started_at: new Date().toISOString(),
+            subscription_expires_at: expiresAt
+          }, { onConflict: "email" });
+          if (subError) console.error("Subscription upsert error:", subError);
+          else console.log("Subscription saved!", expiresAt);
+          await handleLogin({
+            firstName: u.firstName,
+            lastName: u.lastName,
+            email: u.email,
+            broker: BROKER_CODES[u.brokerCode] || BROKER_CODES["ROOMWORTH26"]
+          });
+        } catch(e) { console.error("Payment restore error:", e); }
       }
       setPaymentProcessing(false);
     };
     run();
+  }, []);
+
+  // Handle Stripe payment success
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "success") {
+      window.history.replaceState({}, document.title, "/");
+      setPaymentProcessing(true);
+      const pending = sessionStorage.getItem("rw_pending_user");
+      if (pending) {
+        try {
+          const u = JSON.parse(pending);
+          sessionStorage.removeItem("rw_pending_user");
+          // Upsert user with active subscription after payment
+          const expiresAt = new Date(Date.now() + 30*24*60*60*1000).toISOString();
+          const { error: subError } = await supabase.from("users").upsert({
+            email: u.email,
+            first_name: u.firstName,
+            last_name: u.lastName,
+            broker_code: "ROOMWORTH26",
+            subscription_status: "active",
+            subscription_started_at: new Date().toISOString(),
+            subscription_expires_at: expiresAt
+          }, { onConflict: "email" });
+          if (subError) console.error("Subscription upsert error:", subError);
+          else console.log("Subscription saved!", expiresAt);
+          await handleLogin({
+            firstName: u.firstName,
+            lastName: u.lastName,
+            email: u.email,
+            broker: BROKER_CODES[u.brokerCode] || BROKER_CODES["ROOMWORTH26"]
+          });
+        } catch(e) { console.error("Payment restore error:", e); }
+      }
+      setPaymentProcessing(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -2333,7 +2407,8 @@ export default function RoomWorthApp() {
       try {
         const { data } = await supabase.from("properties").insert({
           user_id: user.id, name: prop.name, address: prop.address, type: prop.type,
-          rebuild_value: prop.rebuildValue, recommended_contents: prop.recommendedContents
+          rebuild_value: prop.rebuildValue, recommended_contents: prop.recommendedContents,
+          photo: prop.photo || null
         }).select().single();
         if (data) {
           const roomsWithIds = await Promise.all(prop.rooms.map(async (r) => {
