@@ -1982,7 +1982,7 @@ function AccountScreen({ user, onLogout, onNavigate }) {
           )}
         </div>
         {[
-          { id:"notifications", icon:"bell",    label:"Notifications",          sub:"Scan alerts and reminders" },
+         // { id:"notifications", icon:"bell",    label:"Notifications",          sub:"Scan alerts and reminders" },
           { id:"privacy",       icon:"privacy", label:"Privacy & Security",     sub:"Your data and account security" },
           { id:"help",          icon:"help",    label:"Help & Support",         sub:"FAQs, guides and contact us" },
           { id:"terms",         icon:"terms",   label:"Terms & Privacy Policy", sub:"Legal information" },
