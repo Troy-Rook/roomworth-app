@@ -2100,7 +2100,20 @@ function PrivacyPage({ user, onBack }) {
               <div style={{ color:"#dc2626", fontWeight:700, fontSize:13, marginBottom:8 }}>Are you sure? This cannot be undone.</div>
               <div style={{ display:"flex", gap:8 }}>
                 <button onClick={()=>setShowDelete(false)} style={{ flex:1, background:"#f1f5f9", border:"none", borderRadius:10, padding:"11px", color:"#1B3A6B", fontWeight:700, cursor:"pointer" }}>Cancel</button>
-                <button onClick={()=>{ alert("Please email privacy@roomworth.co.uk to complete your deletion request."); setShowDelete(false); }} style={{ flex:1, background:"#dc2626", border:"none", borderRadius:10, padding:"11px", color:"white", fontWeight:700, cursor:"pointer" }}>Delete Account</button>
+                <button onClick={async ()=>{ 
+  try {
+    await fetch("https://hzjbprdziqxwrescsqeu.supabase.co/functions/v1/send-email-alert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        type: "deletion_request", 
+        data: { first_name: user.first_name || user.firstName, last_name: user.last_name || user.lastName, email: user.email } 
+      })
+    });
+  } catch(e) { console.error("Alert error:", e); }
+  alert("Your deletion request has been received. We will be in touch within 48 hours."); 
+  setShowDelete(false); 
+}} style={{ flex:1, background:"#dc2626", border:"none", borderRadius:10, padding:"11px", color:"white", fontWeight:700, cursor:"pointer" }}>Delete Account</button>
               </div>
             </div>
           )}
@@ -2312,7 +2325,22 @@ export default function RoomWorthApp() {
           subscription_started_at: new Date().toISOString(),
           subscription_expires_at: isDirectClient ? new Date(Date.now() + 30*24*60*60*1000).toISOString() : null
         }).select().single();
-        existing = newUser;
+        existing = newUser;        // Send new user alert
+        try {
+          await fetch("https://hzjbprdziqxwrescsqeu.supabase.co/functions/v1/send-email-alert", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "new_user",
+              data: {
+                first_name: userData.firstName,
+                last_name: userData.lastName,
+                email: userData.email,
+                broker_code: brokerCode
+              }
+            })
+          });
+        } catch(e) { console.error("New user alert error:", e); }
       }
 
       const userObj = {
@@ -2393,6 +2421,28 @@ export default function RoomWorthApp() {
           image: item.image || null, is_misc: item.isMisc || false
         });
         if (error) console.error("Insert item error:", error);
+
+        // Check if user has exceeded 200 scans
+        const { count } = await supabase
+          .from("items")
+          .select("*", { count: "exact", head: true })
+          .in("room_id", properties.flatMap(p => p.rooms.map(r => r.id)));
+        
+        if (count === 200) {
+          await fetch("https://hzjbprdziqxwrescsqeu.supabase.co/functions/v1/send-email-alert", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "scan_limit",
+              data: {
+                first_name: user.firstName,
+                last_name: user.lastName,
+                email: user.email,
+                scan_count: count
+              }
+            })
+          });
+        }
       } catch(e) { console.error("Save item error:", e); }
     }
   };
