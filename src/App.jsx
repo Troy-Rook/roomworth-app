@@ -1487,7 +1487,7 @@ function ScannerScreen({ user, targetRoom, properties, onBack, onItemScanned, on
 Analyse this image. The user says this item is: "${itemName}" (quantity: ${quantity})
 
 Estimate the UK new replacement cost. Use current UK retail prices. Multiply all values by the quantity.
-Set specialist_flag to true ONLY for: jewellery, watches, fine art, antiques, rare collectibles.
+Set specialist_flag to true ONLY for: fine jewellery (diamonds, precious stones), luxury watches (Rolex, Omega, Patek Philippe, Breitling, Cartier, Tag Heuer, Hublot and similar high-end Swiss brands), fine art (original paintings, sculptures), antiques over 100 years old. Do NOT flag smart watches (Apple Watch, Samsung, Fitbit), standard jewellery, or everyday items.
 confidence is an integer from 0 to 100.
 
 YOU MUST respond with ONLY the following JSON object and absolutely nothing else:
