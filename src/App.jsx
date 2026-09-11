@@ -2104,7 +2104,10 @@ function PrivacyPage({ user, onBack }) {
   try {
     await fetch("https://hzjbprdziqxwrescsqeu.supabase.co/functions/v1/send-email-alert", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6amJwcmR6aXF4d3Jlc2NzcWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MDIwMjgsImV4cCI6MjA1OTI3ODAyOH0.yYqMGNzFANfSMKMbcMyZVBsBOhnHIBsKSBAqgjpdmsk"
+      },
       body: JSON.stringify({ 
         type: "deletion_request", 
         data: { first_name: user.first_name || user.firstName, last_name: user.last_name || user.lastName, email: user.email } 
@@ -2329,7 +2332,10 @@ export default function RoomWorthApp() {
         try {
           await fetch("https://hzjbprdziqxwrescsqeu.supabase.co/functions/v1/send-email-alert", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6amJwcmR6aXF4d3Jlc2NzcWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MDIwMjgsImV4cCI6MjA1OTI3ODAyOH0.yYqMGNzFANfSMKMbcMyZVBsBOhnHIBsKSBAqgjpdmsk"
+            },
             body: JSON.stringify({
               type: "new_user",
               data: {
@@ -2431,7 +2437,10 @@ export default function RoomWorthApp() {
         if (count === 200) {
           await fetch("https://hzjbprdziqxwrescsqeu.supabase.co/functions/v1/send-email-alert", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6amJwcmR6aXF4d3Jlc2NzcWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MDIwMjgsImV4cCI6MjA1OTI3ODAyOH0.yYqMGNzFANfSMKMbcMyZVBsBOhnHIBsKSBAqgjpdmsk"
+            },
             body: JSON.stringify({
               type: "scan_limit",
               data: {
