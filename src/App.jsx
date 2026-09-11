@@ -2212,15 +2212,24 @@ function TermsPage({ onBack }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // NAVIGATION CONTROLLER
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// NAVIGATION CONTROLLER
+// ─────────────────────────────────────────────────────────────────────────────
 export default function RoomWorthApp() {
-  const [user, setUser]               = useState(null);
-  const [screen, setScreen]           = useState("auth");
-  const [properties, setProperties]   = useState([]);
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem("rw_user");
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [screen, setScreen] = useState(() => {
+    const saved = localStorage.getItem("rw_user");
+    return saved ? "properties" : "auth";
+  });
+  const [properties, setProperties]         = useState([]);
   const [activeProperty, setActiveProperty] = useState(null);
   const [scanTargetRoom, setScanTargetRoom] = useState(null);
   const [reportConfig, setReportConfig]     = useState(null);
-  const [activeTab, setActiveTab]     = useState("properties");
-  const [dbLoading, setDbLoading]     = useState(false);
+  const [activeTab, setActiveTab]           = useState("properties");
+  const [dbLoading, setDbLoading]           = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   // Handle Stripe payment success redirect
@@ -2260,8 +2269,6 @@ export default function RoomWorthApp() {
     run();
   }, []);
 
-
-
   useEffect(() => {
     if (!user?.id) return;
     loadProperties(user.id);
@@ -2294,7 +2301,6 @@ export default function RoomWorthApp() {
       let { data: existing } = await supabase
         .from("users").select("*").eq("email", userData.email).maybeSingle();
       if (!existing) {
-        // New user — create with 30 day access if ROOMWORTH26
         const brokerCode = userData.broker?.code || "ROOMWORTH26";
         const isDirectClient = brokerCode === "ROOMWORTH26";
         const { data: newUser } = await supabase.from("users").insert({
@@ -2302,7 +2308,7 @@ export default function RoomWorthApp() {
           first_name: userData.firstName,
           last_name: userData.lastName,
           broker_code: brokerCode,
-          subscription_status: isDirectClient ? "active" : "active",
+          subscription_status: "active",
           subscription_started_at: new Date().toISOString(),
           subscription_expires_at: isDirectClient ? new Date(Date.now() + 30*24*60*60*1000).toISOString() : null
         }).select().single();
@@ -2318,6 +2324,8 @@ export default function RoomWorthApp() {
         subscriptionExpiresAt: existing?.subscription_expires_at,
         brokerCode: existing?.broker_code,
       };
+
+      localStorage.setItem("rw_user", JSON.stringify(userObj));
       setUser(userObj);
 
       // Check if expired (only for ROOMWORTH26 direct clients)
@@ -2328,13 +2336,27 @@ export default function RoomWorthApp() {
           return;
         }
       }
+
+      setScreen("properties");
+      setActiveTab("properties");
+
     } catch(e) {
-      setUser({ ...userData, id: null });
+      const fallback = { ...userData, id: null };
+      localStorage.setItem("rw_user", JSON.stringify(fallback));
+      setUser(fallback);
+      setScreen("properties");
+      setActiveTab("properties");
     }
-    setScreen("properties"); setActiveTab("properties");
   };
 
-  const handleLogout = () => { setUser(null); setScreen("auth"); setProperties([]); setActiveProperty(null); setScanTargetRoom(null); };
+  const handleLogout = () => {
+    localStorage.removeItem("rw_user");
+    setUser(null);
+    setScreen("auth");
+    setProperties([]);
+    setActiveProperty(null);
+    setScanTargetRoom(null);
+  };
 
   const handleViewProperty = (prop) => {
     const latest = properties.find(p => p.id === prop.id) || prop;
