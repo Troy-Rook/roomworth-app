@@ -28,7 +28,7 @@ const BROKER_CODES = {
 const PROPERTY_TYPES = ["Detached House","Semi-Detached","Terraced House","Flat / Apartment","Bungalow","Cottage","Townhouse","Penthouse","Other"];
 
 // Specialist item detection - from Airtable formula
-const SPECIALIST_KEYWORDS = ["rolex","omega","patek","patek philippe","audemars","audemars piguet","breitling","cartier","tag heuer","tudor","hublot","iwc","jaeger","luxury watch","mechanical watch","vintage watch","jewellery","jewelry","diamond","bracelet","necklace","ring","earrings","pendant","brooch","painting","artwork","wall art","fine art","canvas","sculpture","statue","antique","antiques","collectible","collectibles","collection","china","porcelain","silverware","coin","coins","stamp","stamps","vase","bronze","fur","persian rug","oriental rug","tapestry"];
+const SPECIALIST_KEYWORDS = ["rolex","omega","patek","patek philippe","audemars","audemars piguet","breitling","cartier","tag heuer","tudor","hublot","iwc","jaeger","grand seiko","a. lange","vacheron","piaget","jewellery","jewelry","diamond ring","diamond necklace","diamond bracelet","diamond earrings","diamond pendant","fine jewellery","brooch","painting","fine art","oil painting","watercolour","sculpture","antique","antiques","rare collectible","porcelain figurine","silverware","first edition","persian rug","oriental rug","tapestry"];
 
 const isSpecialistItem = (name) => {
   const lower = (name || "").toLowerCase();
