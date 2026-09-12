@@ -506,7 +506,7 @@ function AuthScreen({ onLogin }) {
   const handleSignUp = () => {
     setFormError("");
     if (!firstName.trim()||!lastName.trim()||!email.trim()||password.length<8) return;
-    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    const emailValid = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(email.trim());
     if (!emailValid) { setFormError("Please enter a valid email address."); return; }
     if (password !== confirmPassword) { setFormError("Passwords do not match."); return; }
     if (brokerInfo && brokerInfo.code === "ROOMWORTH26") { setShowPaywall(true); return; }
