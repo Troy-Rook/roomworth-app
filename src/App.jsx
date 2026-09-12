@@ -800,7 +800,7 @@ function PropertiesScreen({ user, properties, setProperties, onViewProperty, onN
                 <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:16, marginBottom:3 }}>{p.name}</div>
                 <div style={{ color:"#94a3b8", fontSize:12, marginBottom:13 }}>{p.address}</div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:12 }}>
-                  {[{label:"Contents",value:fmt(contents)},{label:"Recommended",value:fmt(p.recommendedContents)}].map(({label,value})=>(
+                  {[{label:"Contents",value:fmt(contents)},{label:"Expected",value:fmt(p.recommendedContents)}].map(({label,value})=>(
                     <div key={label} style={{ background:"#f8fafc", borderRadius:11, padding:"9px 11px" }}>
                       <div style={{ color:"#94a3b8", fontSize:9, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:3 }}>{label}</div>
                       <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:14 }}>{value}</div>
@@ -933,7 +933,7 @@ function PropertyModal({ existing, onSave, onClose }) {
               <input type="number" value={rebuild} onChange={e=>setRebuild(e.target.value)} placeholder="1850000"
                 style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 13px 13px 26px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box" }} />
             </div>
-            {rebuildNum>0 && <div style={{ marginTop:8, background:"#f0f9ff", borderRadius:10, padding:"9px 12px", border:"1px solid #bae6fd", color:"#0369a1", fontSize:12, fontWeight:600 }}>🎯 Recommended contents: {fmt(Math.round(rebuildNum*0.1))}</div>}
+            {rebuildNum>0 && <div style={{ marginTop:8, background:"#f0f9ff", borderRadius:10, padding:"9px 12px", border:"1px solid #bae6fd", color:"#0369a1", fontSize:12, fontWeight:600 }}>🎯 Expected contents: {fmt(Math.round(rebuildNum*0.1))}</div>}
           </div>
           <PrimaryBtn onClick={save} disabled={!isValid}>{existing?"Save Changes":"Add Property"}</PrimaryBtn>
         </div>
@@ -1020,7 +1020,7 @@ function RoomsScreen({ property, onUpdateProperty, onBack, onScanItem, onViewRep
         {/* Property summary card */}
         <div style={{ background:"linear-gradient(135deg,#1B3A6B,#1e4d8c)", borderRadius:22, padding:"20px", marginBottom:16, boxShadow:"0 8px 28px rgba(27,58,107,0.2)" }}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:9, marginBottom:16 }}>
-            {[{label:"Rebuild Value",value:fmt(property.rebuildValue),icon:"building"},{label:"Contents Est.",value:fmt(totalContents),icon:"rooms"},{label:"Recommended",value:fmt(property.recommendedContents),icon:"report"}].map(({label,value,icon})=>(
+            {[{label:"Rebuild Value",value:fmt(property.rebuildValue),icon:"building"},{label:"Contents Est.",value:fmt(totalContents),icon:"rooms"},{label:"Expected",value:fmt(property.recommendedContents),icon:"report"}].map(({label,value,icon})=>(
               <div key={label} style={{ background:"rgba(255,255,255,0.1)", borderRadius:11, padding:"10px 6px", textAlign:"center" }}>
                 <div style={{ display:"flex", justifyContent:"center", marginBottom:5 }}><SvgIcon name={icon} size={18} color="rgba(255,255,255,0.75)"/></div>
                 <div style={{ color:"white", fontWeight:800, fontSize:13 }}>{value}</div>
@@ -1786,7 +1786,7 @@ function ReportViewer({ type, property, onBack }) {
             <div style={{ color:"white", fontWeight:800, fontSize:20, marginBottom:3 }}>{property.name}</div>
             <div style={{ color:"white", fontWeight:600, fontSize:12, marginBottom:14, textShadow:"0 1px 2px rgba(0,0,0,0.3)" }}>{property.address}</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:8 }}>
-              {[{label:"Rebuild",value:fmt(property.rebuildValue),icon:"building"},{label:"Contents",value:fmt(totalContents),icon:"rooms"},{label:"Recommended",value:fmt(property.recommendedContents),icon:"report"},{label:"Coverage",value:`${pct}%`,icon:"list"}].map(({label,value,icon})=>(
+              {[{label:"Rebuild",value:fmt(property.rebuildValue),icon:"building"},{label:"Contents",value:fmt(totalContents),icon:"rooms"},{label:"Expected",value:fmt(property.recommendedContents),icon:"report"},{label:"Coverage",value:`${pct}%`,icon:"list"}].map(({label,value,icon})=>(
                 <div key={label} style={{ background:"rgba(255,255,255,0.1)", borderRadius:11, padding:"9px 5px", textAlign:"center" }}>
                   <div style={{ display:"flex", justifyContent:"center", marginBottom:4 }}><SvgIcon name={icon} size={14} color="rgba(255,255,255,0.95)"/></div>
                   <div style={{ color:"white", fontWeight:900, fontSize:14, textShadow:"0 1px 2px rgba(0,0,0,0.3)" }}>{value}</div>
@@ -1801,12 +1801,12 @@ function ReportViewer({ type, property, onBack }) {
         <Card>
           <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
             <span style={{ color:"#1B3A6B", fontWeight:700, fontSize:13 }}>Contents Coverage</span>
-            <span style={{ color:pc, fontWeight:800, fontSize:13 }}>{pct}% of recommended minimum</span>
+            <span style={{ color:pc, fontWeight:800, fontSize:13 }}>{pct}% of expected minimum</span>
           </div>
           <div style={{ background:"#e2e8f0", borderRadius:99, height:9, overflow:"hidden" }}>
             <div style={{ height:"100%", borderRadius:99, width:`${pct}%`, background:`linear-gradient(90deg,${pc}99,${pc})` }} />
           </div>
-          {pct<100 && <div style={{ color:"#f59e0b", fontSize:12, fontWeight:600, marginTop:7 }}>⚠️ {fmt(property.recommendedContents-totalContents)} below recommended minimum</div>}
+          {pct<100 && <div style={{ color:"#f59e0b", fontSize:12, fontWeight:600, marginTop:7 }}>⚠️ {fmt(property.recommendedContents-totalContents)} below expected minimum</div>}
         </Card>
 
         {/* Specialist + Missing Items — Broker Report Only */}
@@ -2133,7 +2133,7 @@ function HelpPage({ onBack }) {
     { q:"How do I scan an item?", a:"Go to any property, select a room and tap '+ Scan'. Take a photo, enter the item name and quantity, then tap 'Scan & Value Item'. Our AI will estimate the UK replacement value in seconds." },
     { q:"How accurate are the AI valuations?", a:"Our AI uses current UK retail pricing data to estimate new replacement costs. Values are estimates and should be reviewed by your broker before finalising coverage. High confidence scans (75%+) are generally very accurate for standard household items." },
     { q:"What is a specialist item?", a:"Specialist items include jewellery, watches, fine art, antiques and collectibles that require individual professional valuation. These are flagged automatically and excluded from the estimated total." },
-    { q:"What is the recommended contents value?", a:"We recommend insuring contents for a minimum of 10% of your property rebuild value. Your broker may recommend a different figure based on your circumstances." },
+    { q:"What is the Expected contents value?", a:"Insurers typically expect contents cover to be a minimum of 10% of your property rebuild value. Your broker may suggest a different figure based on your circumstances." },
     { q:"Can I override the AI valuation?", a:"Yes! After scanning, tap 'Override estimated value' to enter your own figure. Both the AI estimate and your override are stored and shown in your reports." },
     { q:"How do I add items I cannot photograph?", a:"Use 'Add Everyday Items' on any room card to add grouped items like clothing or kitchenware as a single estimated value. No photo needed." },
     { q:"Is my data safe?", a:"Yes. All data is stored on encrypted servers in the EU (Ireland), fully GDPR compliant. We never share or sell your personal data." },
