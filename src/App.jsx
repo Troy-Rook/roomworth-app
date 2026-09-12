@@ -1742,8 +1742,36 @@ function ReportsScreen({ properties, onViewReport, onNavigate }) {
 // SCREEN 6 — REPORT VIEWER (Broker + Inventory)
 // ─────────────────────────────────────────────────────────────────────────────
 function ReportViewer({ type, property, onBack }) {
-  const reportRef = `RW-${type==="broker"?"RPT":"INV"}-2026-${String(Math.floor(Math.random()*9000)+1000)}`;
+  const [reportRef, setReportRef] = useState("");
   const date = new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+
+  useEffect(() => {
+    const loadOrCreateRef = async () => {
+      // Check if a report reference already exists for this property and type
+      const { data: existing } = await supabase
+        .from("reports")
+        .select("reference_number")
+        .eq("property_id", property.id)
+        .eq("report_type", type)
+        .maybeSingle();
+
+      if (existing?.reference_number) {
+        setReportRef(existing.reference_number);
+      } else {
+        // Generate a new reference and save it
+        const newRef = `RW-${type==="broker"?"RPT":"INV"}-2026-${String(Math.floor(Math.random()*9000)+1000)}`;
+        await supabase.from("reports").insert({
+          property_id: property.id,
+          user_id: property.user_id,
+          report_type: type,
+          reference_number: newRef
+        });
+        setReportRef(newRef);
+      }
+    };
+    console.log("Property ID:", property?.id, "User ID:", property?.user_id);
+    if (property?.id) loadOrCreateRef();
+  }, [property?.id, type]);
   const allItems = property.rooms.flatMap(r=>r.items.map(i=>({...i,room:r.name,roomColor:r.color})));
   const totalContents = allItems.filter(i=>!i.specialist).reduce((s,i)=>s+(i.override_value||i.value)*i.qty,0);
   // Detect specialist items - either flagged by AI or matched by keyword
