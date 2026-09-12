@@ -487,6 +487,8 @@ function AuthScreen({ onLogin }) {
   const [email, setEmail]           = useState("");
   const [password, setPassword]     = useState("");
   const [showPass, setShowPass]     = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [formError, setFormError]   = useState("");
   const [loading, setLoading]       = useState(false);
 
   const switchMode = (m) => {
@@ -502,7 +504,11 @@ function AuthScreen({ onLogin }) {
   };
 
   const handleSignUp = () => {
+    setFormError("");
     if (!firstName.trim()||!lastName.trim()||!email.trim()||password.length<8) return;
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    if (!emailValid) { setFormError("Please enter a valid email address."); return; }
+    if (password !== confirmPassword) { setFormError("Passwords do not match."); return; }
     if (brokerInfo && brokerInfo.code === "ROOMWORTH26") { setShowPaywall(true); return; }
     setLoading(true);
     setTimeout(() => {
@@ -629,7 +635,7 @@ function AuthScreen({ onLogin }) {
                     <input value={lastName} onChange={e=>setLastName(e.target.value)} placeholder="Davies" style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 13px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box" }} /></div>
                 </div>
                 <div style={{ marginTop:10 }}><InputField label="Email" type="email" value={email} onChange={setEmail} placeholder="james@email.com" /></div>
-                <div style={{ marginBottom:20 }}>
+                <div style={{ marginBottom:12 }}>
                   <label style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:7 }}>Password</label>
                   <div style={{ position:"relative" }}>
                     <input type={showPass?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Min 8 characters"
@@ -637,7 +643,15 @@ function AuthScreen({ onLogin }) {
                     <button onClick={()=>setShowPass(!showPass)} style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:16, color:"#94a3b8" }}>{showPass?"🙈":"👁"}</button>
                   </div>
                 </div>
-                <PrimaryBtn onClick={handleSignUp} loading={loading} disabled={!firstName||!lastName||!email||password.length<8}>Create Account 🚀</PrimaryBtn>
+                <div style={{ marginBottom:20 }}>
+                  <label style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:7 }}>Confirm Password</label>
+                  <div style={{ position:"relative" }}>
+                    <input type={showPass?"text":"password"} value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} placeholder="Repeat your password"
+                      style={{ width:"100%", background:"#f8fafc", border:`1.5px solid ${confirmPassword && confirmPassword!==password?"#fca5a5":"#e2e8f0"}`, borderRadius:12, padding:"13px 15px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box" }} />
+                  </div>
+                </div>
+                {formError && <div style={{ background:"#fef2f2", border:"1.5px solid #fca5a5", borderRadius:12, padding:"11px 14px", color:"#dc2626", fontSize:12, marginBottom:12 }}>⚠️ {formError}</div>}
+                <PrimaryBtn onClick={handleSignUp} loading={loading} disabled={!firstName||!lastName||!email||password.length<8||!confirmPassword}>Create Account 🚀</PrimaryBtn>
               </>
             )}
             <div style={{ textAlign:"center", marginTop:20 }}>
