@@ -23,6 +23,7 @@ const BROKER_CODES = {
   "STANHOPE26":  { broker: "Stanhope Cooper",    color: "#0f4c35", accent: "#22c55e" },
   "ROOMWORTH26": { broker: "Room Worth Direct",  color: "#4AABBF", accent: "#1B3A6B" },
   "PREMIER26":   { broker: "Premier Insurance",  color: "#7c3aed", accent: "#a78bfa" },
+  "DEMO26":      { broker: "RoomWorth Demo",     color: "#0f172a", accent: "#f59e0b" },
 };
 
 const PROPERTY_TYPES = ["Detached House","Semi-Detached","Terraced House","Flat / Apartment","Bungalow","Cottage","Townhouse","Penthouse","Other"];
@@ -2347,6 +2348,8 @@ export default function RoomWorthApp() {
       if (!existing) {
         const brokerCode = userData.broker?.code || "ROOMWORTH26";
         const isDirectClient = brokerCode === "ROOMWORTH26";
+        const isDemoClient = brokerCode === "DEMO26";
+        const expiryDays = isDirectClient ? 30 : isDemoClient ? 7 : null;
         const { data: newUser } = await supabase.from("users").insert({
           email: userData.email,
           first_name: userData.firstName,
@@ -2354,7 +2357,7 @@ export default function RoomWorthApp() {
           broker_code: brokerCode,
           subscription_status: "active",
           subscription_started_at: new Date().toISOString(),
-          subscription_expires_at: isDirectClient ? new Date(Date.now() + 30*24*60*60*1000).toISOString() : null
+          subscription_expires_at: expiryDays ? new Date(Date.now() + expiryDays*24*60*60*1000).toISOString() : null
         }).select().single();
         existing = newUser;        // Send new user alert
         try {
@@ -2390,8 +2393,8 @@ export default function RoomWorthApp() {
       localStorage.setItem("rw_user", JSON.stringify(userObj));
       setUser(userObj);
 
-      // Check if expired (only for ROOMWORTH26 direct clients)
-      if (existing?.broker_code === "ROOMWORTH26" && existing?.subscription_expires_at) {
+      // Check if expired (only for ROOMWORTH26 direct clients and DEMO26)
+      if ((existing?.broker_code === "ROOMWORTH26" || existing?.broker_code === "DEMO26") && existing?.subscription_expires_at) {
         const expired = new Date(existing.subscription_expires_at) < new Date();
         if (expired) {
           setScreen("expired");
