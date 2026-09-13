@@ -473,7 +473,57 @@ function ExpiredScreen({ user, onRenew, onLogout }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// RESET PASSWORD SCREEN
+// ONBOARDING TUTORIAL
+// ─────────────────────────────────────────────────────────────────────────────
+function OnboardingTutorial({ onDone }) {
+  const [slide, setSlide] = useState(0);
+
+  const slides = [
+    {
+      emoji: "🏡",
+      title: "Welcome to RoomWorth!",
+      body: "The smart way to estimate your home contents value for insurance. Let us show you how it works in 4 quick steps."
+    },
+    {
+      emoji: "📸",
+      title: "Add a Property & Scan",
+      body: "Add your property, then go room by room taking photos of your items. Our AI will identify and value each one instantly."
+    },
+    {
+      emoji: "📄",
+      title: "Generate a Broker Report",
+      body: "Share a professional broker-ready report directly with your insurance broker, including all scanned items and specialist flags."
+    },
+    {
+      emoji: "📋",
+      title: "Generate an Inventory Report",
+      body: "Create a detailed inventory report of everything in your home — perfect for your own records and peace of mind."
+    },
+    {
+      emoji: "🚀",
+      title: "You're Ready to Go!",
+      body: "Start by adding your first property. If you need help at any time, visit Help & Support in your Account tab."
+    }
+  ];
+
+  const handleDone = () => {
+    localStorage.setItem("rw_onboarded", "true");
+    onDone();
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", display:"flex", alignItems:"flex-end", justifyContent:"center", zIndex:999 }}>
+      <div style={{ background:"white", borderRadius:"26px 26px 0 0", padding:"32px 24px 48px", width:"100%", maxWidth:480, animation:"fadeUp 0.3s ease" }}>
+        {/* Dots */}
+        <div style={{ display:"flex", justifyContent:"center", gap:6, marginBottom:24 }}>
+          {slides.map((_,i) => (
+            <div key={i} style={{ width: i===slide ? 20 : 7, height:7, borderRadius:4, background: i===slide ? "#1B3A6B" : "#e2e8f0", transition:"all 0.3s ease" }} />
+          ))}
+        </div>
+        {/* Content */}
+        <div style={{ textAlign:"center", padding:"0 12px" }}>
+          <div style={{ fontSize:56, marginBottom:16 }}>{slides[slide].emoji}</div>
+          <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:22, marginBottom:10
 // ─────────────────────────────────────────────────────────────────────────────
 function ResetPasswordScreen({ token, email, onDone }) {
   const [password, setPassword] = useState("");
@@ -2414,6 +2464,7 @@ export default function RoomWorthApp() {
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [resetToken, setResetToken] = useState("");
   const [resetEmail, setResetEmail] = useState("");
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Handle password reset redirect
   useEffect(() => {
@@ -2554,6 +2605,13 @@ export default function RoomWorthApp() {
 
       localStorage.setItem("rw_user", JSON.stringify(userObj));
       setUser(userObj);
+
+      // Show onboarding for new users
+      if (!existing) {
+        setShowOnboarding(true);
+      } else if (!localStorage.getItem("rw_onboarded")) {
+        setShowOnboarding(true);
+      }
 
       // Check if expired (only for ROOMWORTH26 direct clients and DEMO26)
       if ((existing?.broker_code === "ROOMWORTH26" || existing?.broker_code === "DEMO26") && existing?.subscription_expires_at) {
@@ -2704,6 +2762,7 @@ export default function RoomWorthApp() {
       {screen==="reports"    && <ReportsScreen properties={properties} onViewReport={handleViewReport} onNavigate={handleNavigate} />}
       {screen==="report"     && reportConfig && <ReportViewer type={reportConfig.type} property={properties.find(p=>p.id===reportConfig.property.id)||activeProperty||reportConfig.property} onBack={()=>setScreen(activeProperty?"rooms":"reports")} />}
       {screen==="account"    && user && <AccountScreen user={user} onLogout={handleLogout} onNavigate={handleNavigate} />}
+      {showOnboarding && <OnboardingTutorial onDone={()=>setShowOnboarding(false)} />}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
         @keyframes fadeUp { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
