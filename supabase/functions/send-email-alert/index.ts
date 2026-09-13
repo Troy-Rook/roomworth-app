@@ -30,6 +30,20 @@ Deno.serve(async (req) => {
     } else if (type === "scan_limit") {
       subject = "⚠️ User Exceeded 200 Scans!";
       html = `<h2>User exceeded 200 scans</h2><p><strong>Name:</strong> ${data.first_name} ${data.last_name}</p><p><strong>Email:</strong> ${data.email}</p><p><strong>Scans:</strong> ${data.scan_count}</p>`;
+    } else if (type === "password_reset") {
+      subject = "Reset your RoomWorth password";
+      html = `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #1B3A6B;">Reset your password</h2>
+          <p>We received a request to reset your RoomWorth password. Click the button below to choose a new one:</p>
+          <a href="https://roomworth.co.uk?reset=${data.token}" 
+             style="display:inline-block; background: linear-gradient(135deg,#1B3A6B,#4AABBF); color: white; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: 700; margin: 16px 0;">
+            Reset Password
+          </a>
+          <p style="color: #64748b; font-size: 13px;">This link expires in 1 hour. If you didn't request this, you can safely ignore this email.</p>
+          <p style="color: #64748b; font-size: 13px;">— The RoomWorth Team</p>
+        </div>
+      `;
     }
 
     const res = await fetch("https://api.resend.com/emails", {

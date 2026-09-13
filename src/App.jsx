@@ -473,6 +473,74 @@ function ExpiredScreen({ user, onRenew, onLogout }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// RESET PASSWORD SCREEN
+// ─────────────────────────────────────────────────────────────────────────────
+function ResetPasswordScreen({ token, email, onDone }) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+
+  const handleReset = async () => {
+    setError("");
+    if (password.length < 8) { setError("Password must be at least 8 characters."); return; }
+    if (password !== confirmPassword) { setError("Passwords do not match."); return; }
+    setLoading(true);
+    try {
+      const { error: updateError } = await supabase.from("users").update({ password }).eq("email", email);
+      if (updateError) throw updateError;
+      await supabase.from("password_resets").delete().eq("token", token);
+      setDone(true);
+    } catch(e) {
+      setError("Something went wrong. Please try again.");
+      console.error("Reset error:", e);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#0f1e3d,#1B3A6B)", display:"flex", flexDirection:"column" }}>
+      <div style={{ padding:"60px 22px 24px" }}>
+        <div style={{ color:"white", fontWeight:800, fontSize:20 }}>Reset Password</div>
+        <div style={{ color:"rgba(255,255,255,0.6)", fontSize:12 }}>Choose a new password for your account</div>
+      </div>
+      <div style={{ flex:1, background:"white", borderRadius:"26px 26px 0 0", marginTop:-26, padding:"28px 22px 48px" }}>
+        {done ? (
+          <div style={{ textAlign:"center", padding:"40px 20px" }}>
+            <div style={{ fontSize:48, marginBottom:16 }}>✅</div>
+            <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:20, marginBottom:8 }}>Password Updated!</div>
+            <div style={{ color:"#64748b", fontSize:14, marginBottom:24 }}>You can now sign in with your new password.</div>
+            <PrimaryBtn onClick={onDone}>Back to Sign In →</PrimaryBtn>
+          </div>
+        ) : (
+          <>
+            <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:22, marginBottom:6 }}>New Password</div>
+            <div style={{ color:"#64748b", fontSize:13, marginBottom:22 }}>Resetting password for <strong>{email}</strong></div>
+            <div style={{ marginBottom:12 }}>
+              <label style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:7 }}>New Password</label>
+              <div style={{ position:"relative" }}>
+                <input type={showPass?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Min 8 characters"
+                  style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 46px 13px 15px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box" }} />
+                <button onClick={()=>setShowPass(!showPass)} style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:16, color:"#94a3b8" }}>{showPass?"🙈":"👁"}</button>
+              </div>
+            </div>
+            <div style={{ marginBottom:20 }}>
+              <label style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:7 }}>Confirm Password</label>
+              <input type={showPass?"text":"password"} value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} placeholder="Repeat your password"
+                style={{ width:"100%", background:"#f8fafc", border:`1.5px solid ${confirmPassword && confirmPassword!==password?"#fca5a5":"#e2e8f0"}`, borderRadius:12, padding:"13px 15px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box" }} />
+            </div>
+            {error && <div style={{ background:"#fef2f2", border:"1.5px solid #fca5a5", borderRadius:12, padding:"11px 14px", color:"#dc2626", fontSize:12, marginBottom:12 }}>⚠️ {error}</div>}
+            <PrimaryBtn onClick={handleReset} loading={loading} disabled={!password||!confirmPassword}>Update Password →</PrimaryBtn>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SCREEN 1 — AUTH
 // ─────────────────────────────────────────────────────────────────────────────
 function AuthScreen({ onLogin }) {
@@ -494,7 +562,33 @@ function AuthScreen({ onLogin }) {
   const switchMode = (m) => {
     setMode(m); setStep(1); setEmail(""); setPassword("");
     setFirstName(""); setLastName(""); setBrokerCode("");
-    setBrokerInfo(null); setCodeError("");
+    setBrokerInfo(null); setCodeError(""); setFormError("");
+    setConfirmPassword("");
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) return;
+    setLoading(true);
+    try {
+      const { data: user } = await supabase.from("users").select("id").eq("email", email.trim()).maybeSingle();
+      if (user) {
+        const token = crypto.randomUUID();
+        const expiresAt = new Date(Date.now() + 60*60*1000).toISOString();
+        await supabase.from("password_resets").insert({ email: email.trim(), token, expires_at: expiresAt });
+        await fetch("https://hzjbprdziqxwrescsqeu.supabase.co/functions/v1/send-email-alert", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6amJwcmR6aXF4d3Jlc2NzcWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MDIwMjgsImV4cCI6MjA1OTI3ODAyOH0.yYqMGNzFANfSMKMbcMyZVBsBOhnHIBsKSBAqgjpdmsk"
+          },
+          body: JSON.stringify({ type: "password_reset", data: { token, email: email.trim() } })
+        });
+      }
+      setFormError("success");
+    } catch(e) {
+      console.error("Forgot password error:", e);
+    }
+    setLoading(false);
   };
 
   const verifyCode = () => {
@@ -534,6 +628,38 @@ function AuthScreen({ onLogin }) {
     }
     setLoading(false);
   };
+
+  if (mode === "forgot") return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#0f1e3d,#1B3A6B)", display:"flex", flexDirection:"column" }}>
+      <div style={{ padding:"60px 22px 24px", display:"flex", alignItems:"center", gap:12 }}>
+        <button onClick={()=>switchMode("login")} style={{ background:"rgba(255,255,255,0.1)", border:"none", borderRadius:"50%", width:36, height:36, color:"white", fontSize:18, cursor:"pointer" }}>←</button>
+        <div>
+          <div style={{ color:"white", fontWeight:800, fontSize:20 }}>Forgot Password</div>
+          <div style={{ color:"rgba(255,255,255,0.6)", fontSize:12 }}>We'll send you a reset link</div>
+        </div>
+      </div>
+      <div style={{ flex:1, background:"white", borderRadius:"26px 26px 0 0", marginTop:-26, padding:"28px 22px 48px" }}>
+        {formError === "success" ? (
+          <div style={{ textAlign:"center", padding:"40px 20px" }}>
+            <div style={{ fontSize:48, marginBottom:16 }}>📧</div>
+            <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:20, marginBottom:8 }}>Check your email!</div>
+            <div style={{ color:"#64748b", fontSize:14, lineHeight:1.6 }}>If an account exists for <strong>{email}</strong>, we've sent a password reset link. It expires in 1 hour.</div>
+            <button onClick={()=>switchMode("login")} style={{ marginTop:24, background:"none", border:"none", color:"#4AABBF", fontWeight:700, fontSize:14, cursor:"pointer" }}>Back to Sign In</button>
+          </div>
+        ) : (
+          <>
+            <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:22, marginBottom:6 }}>Reset Password</div>
+            <div style={{ color:"#64748b", fontSize:13, marginBottom:22 }}>Enter your email and we'll send you a reset link.</div>
+            <InputField label="Email Address" type="email" value={email} onChange={setEmail} placeholder="james@email.com" />
+            <PrimaryBtn onClick={handleForgotPassword} loading={loading} disabled={!email}>Send Reset Link →</PrimaryBtn>
+            <div style={{ textAlign:"center", marginTop:16 }}>
+              <button onClick={()=>switchMode("login")} style={{ background:"none", border:"none", color:"#94a3b8", fontSize:13, cursor:"pointer", fontWeight:500 }}>Back to Sign In</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
 
   if (showPaywall) return (
     <PaywallScreen
@@ -577,7 +703,10 @@ function AuthScreen({ onLogin }) {
               </div>
             </div>
             <PrimaryBtn onClick={handleLogin} loading={loading} disabled={!email||!password}>Sign In →</PrimaryBtn>
-            <div style={{ textAlign:"center", marginTop:20 }}>
+            <div style={{ textAlign:"center", marginTop:12 }}>
+              <button onClick={()=>switchMode("forgot")} style={{ background:"none", border:"none", color:"#94a3b8", fontSize:12, cursor:"pointer", fontWeight:500 }}>Forgot your password?</button>
+            </div>
+            <div style={{ textAlign:"center", marginTop:8 }}>
               <span style={{ color:"#94a3b8", fontSize:13 }}>No account? </span>
               <button onClick={()=>switchMode("signup")} style={{ background:"none", border:"none", color:"#4AABBF", fontWeight:700, fontSize:13, cursor:"pointer" }}>Sign Up</button>
             </div>
@@ -2290,6 +2419,30 @@ export default function RoomWorthApp() {
   const [activeTab, setActiveTab]           = useState("properties");
   const [dbLoading, setDbLoading]           = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [resetToken, setResetToken] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
+
+  // Handle password reset redirect
+  useEffect(() => {
+    const checkReset = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const resetToken = params.get("reset");
+      if (resetToken) {
+        window.history.replaceState({}, document.title, "/");
+        const { data: resetData } = await supabase
+          .from("password_resets")
+          .select("*")
+          .eq("token", resetToken)
+          .maybeSingle();
+        if (resetData && new Date(resetData.expires_at) > new Date()) {
+          setResetToken(resetToken);
+          setResetEmail(resetData.email);
+          setScreen("reset");
+        }
+      }
+    };
+    checkReset();
+  }, []);
 
   // Handle Stripe payment success redirect
   useEffect(() => {
@@ -2547,6 +2700,7 @@ export default function RoomWorthApp() {
         </div>
       )}
       {screen==="auth"       && <AuthScreen onLogin={handleLogin} />}
+      {screen==="reset"      && <ResetPasswordScreen token={resetToken} email={resetEmail} onDone={()=>setScreen("auth")} />}
       {screen==="expired"    && user && <ExpiredScreen user={user} onLogout={handleLogout} onRenew={()=>setScreen("renew")} />}
       {screen==="renew"      && user && <PaywallScreen email={user.email} firstName={user.firstName} lastName={user.lastName} onSuccess={(u)=>{ handleLogin(u||user); }} onBack={()=>setScreen("expired")} />}
       {screen==="properties" && user && <PropertiesScreen user={user} properties={properties} setProperties={setProperties} saveProperty={saveProperty} onViewProperty={handleViewProperty} onNavigate={handleNavigate} />}
