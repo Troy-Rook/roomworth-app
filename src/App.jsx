@@ -2530,7 +2530,10 @@ export default function RoomWorthApp() {
   useEffect(() => {
     if (!user?.id) return;
     loadProperties(user.id);
-  }, [user]);
+    if (!localStorage.getItem("rw_onboarded")) {
+      setShowOnboarding(true);
+    }
+  }, [user?.id]);
 
   const loadProperties = async (userId) => {
     setDbLoading(true);
