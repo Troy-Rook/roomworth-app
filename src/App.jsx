@@ -2607,9 +2607,7 @@ export default function RoomWorthApp() {
       setUser(userObj);
 
       // Show onboarding for new users
-      if (!existing) {
-        setShowOnboarding(true);
-      } else if (!localStorage.getItem("rw_onboarded")) {
+      if (!localStorage.getItem("rw_onboarded")) {
         setShowOnboarding(true);
       }
 
