@@ -46,6 +46,8 @@ Deno.serve(async (req) => {
       `;
     }
 
+    const toEmail = type === "password_reset" ? data.email : "troy@roomworth.co.uk";
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -54,7 +56,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: "hello@roomworth.co.uk",
-        to: "troy@roomworth.co.uk",
+        to: toEmail,
         subject,
         html,
       }),

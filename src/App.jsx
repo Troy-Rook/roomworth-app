@@ -2427,13 +2427,15 @@ export default function RoomWorthApp() {
     const checkReset = async () => {
       const params = new URLSearchParams(window.location.search);
       const resetToken = params.get("reset");
+      console.log("Reset token from URL:", resetToken);
       if (resetToken) {
         window.history.replaceState({}, document.title, "/");
-        const { data: resetData } = await supabase
+        const { data: resetData, error: resetError } = await supabase
           .from("password_resets")
           .select("*")
           .eq("token", resetToken)
           .maybeSingle();
+        console.log("Reset data:", resetData, "Error:", resetError);
         if (resetData && new Date(resetData.expires_at) > new Date()) {
           setResetToken(resetToken);
           setResetEmail(resetData.email);
