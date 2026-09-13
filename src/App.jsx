@@ -2168,7 +2168,11 @@ function AccountScreen({ user, onLogout, onNavigate }) {
             <SvgIcon name="chevron_r" size={16} color="#cbd5e1"/>
           </div>
         ))}
-RoomWorth v1.0.0 · © {new Date().getFullYear()} RoomWorth Limited
+      </div>
+    </div>
+  );
+}
+
 // ── Notifications Page ────────────────────────────────────────────────────────
 function NotificationsPage({ user, onBack }) {
   const items = [
