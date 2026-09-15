@@ -1077,6 +1077,10 @@ function PropertyModal({ existing, onSave, onClose }) {
               <input type="number" value={rebuild} onChange={e=>setRebuild(e.target.value)} placeholder="1850000"
                 style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 13px 13px 26px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box" }} />
             </div>
+            <div style={{ background:"#f0f9ff", border:"1px solid #bae6fd", borderRadius:12, padding:"12px 14px", marginTop:10 }}>
+              <div style={{ color:"#0369a1", fontSize:12, fontWeight:600, marginBottom:4 }}>💡 Why do we ask for this?</div>
+              <div style={{ color:"#0369a1", fontSize:11, lineHeight:1.6 }}>Most insurers expect your contents value to be at least 10% of your property rebuild value. If you're unsure of your rebuild value, we strongly recommend getting a professional survey completed. If you're on a standard high street policy that offers up to £1,000,000 fire rebuild cover, enter <strong>£1,000,000</strong> for now.</div>
+            </div>
             {rebuildNum>0 && <div style={{ marginTop:8, background:"#f0f9ff", borderRadius:10, padding:"9px 12px", border:"1px solid #bae6fd", color:"#0369a1", fontSize:12, fontWeight:600 }}>🎯 Expected contents: {fmt(Math.round(rebuildNum*0.1))}</div>}
           </div>
           <PrimaryBtn onClick={save} disabled={!isValid}>{existing?"Save Changes":"Add Property"}</PrimaryBtn>
