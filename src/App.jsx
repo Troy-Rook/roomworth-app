@@ -24,6 +24,7 @@ const BROKER_CODES = {
   "ROOMWORTH26": { broker: "Room Worth Direct",  color: "#4AABBF", accent: "#1B3A6B" },
   "PREMIER26":   { broker: "Premier Insurance",  color: "#7c3aed", accent: "#a78bfa" },
   "DEMO26":      { broker: "RoomWorth Demo",     color: "#0f172a", accent: "#f59e0b" },
+  "ADMIN12071989": { broker: "RoomWorth Admin",  color: "#1B3A6B", accent: "#4AABBF" },
 };
 
 const PROPERTY_TYPES = ["Detached House","Semi-Detached","Terraced House","Flat / Apartment","Bungalow","Cottage","Townhouse","Penthouse","Other"];
