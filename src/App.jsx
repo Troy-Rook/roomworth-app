@@ -2136,7 +2136,7 @@ function ReportViewer({ type, property, onBack }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREEN 7 — ACCOUNT
 // ─────────────────────────────────────────────────────────────────────────────
-function AccountScreen({ user, onLogout, onNavigate }) {
+function AccountScreen({ user, onLogout, onNavigate, onAdmin }) {
   const [subPage, setSubPage] = useState(null);
   if (subPage==="notifications") return <NotificationsPage user={user} onBack={()=>setSubPage(null)} />;
   if (subPage==="privacy") return <PrivacyPage user={user} onBack={()=>setSubPage(null)} />;
@@ -2172,10 +2172,149 @@ function AccountScreen({ user, onLogout, onNavigate }) {
             <SvgIcon name="chevron_r" size={16} color="#cbd5e1"/>
           </div>
         ))}
+        {user?.email === "troy@roomworth.co.uk" && (
+          <button onClick={onAdmin} style={{ width:"100%", background:"linear-gradient(135deg,#1B3A6B,#4AABBF)", border:"none", borderRadius:16, padding:"15px", color:"white", fontSize:14, fontWeight:700, cursor:"pointer", marginTop:8, marginBottom:8, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>📊 Admin Dashboard</button>
+        )}
         <button onClick={onLogout} style={{ width:"100%", background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:16, padding:"15px", color:"#dc2626", fontSize:14, fontWeight:700, cursor:"pointer", marginTop:8, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}><SvgIcon name="signout" size={16} color="#dc2626"/> Sign Out</button>
         <div style={{ textAlign:"center", color:"#94a3b8", fontSize:11, marginTop:16 }}>RoomWorth v1.0.0 · © {new Date().getFullYear()} RoomWorth Limited</div>
       </div>
       <BottomNav active="account" onNavigate={onNavigate} />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADMIN DASHBOARD
+// ─────────────────────────────────────────────────────────────────────────────
+function AdminDashboard({ onBack }) {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const { data: users } = await supabase.from("users").select("*");
+        const { data: properties } = await supabase.from("properties").select("*");
+        const { data: items } = await supabase.from("items").select("*");
+        const { data: reports } = await supabase.from("reports").select("*");
+
+        // Users by broker code
+        const brokerBreakdown = users.reduce((acc, u) => {
+          const code = u.broker_code || "UNKNOWN";
+          acc[code] = (acc[code] || 0) + 1;
+          return acc;
+        }, {});
+
+        // Recent signups (last 5)
+        const recentUsers = [...users].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
+
+        // Coverage insights
+        const coverageData = properties.map(p => {
+          const expected = p.recommended_contents || 0;
+          const rebuild = p.rebuild_value || 0;
+          const expectedFromRebuild = rebuild * 0.1;
+          return { expected: expectedFromRebuild, rebuild };
+        }).filter(p => p.rebuild > 0);
+
+        setStats({
+          totalUsers: users.length,
+          totalProperties: properties.length,
+          totalItems: items.length,
+          totalReports: reports.length,
+          brokerBreakdown,
+          recentUsers,
+          coverageData,
+        });
+      } catch(e) {
+        console.error("Admin load error:", e);
+      }
+      setLoading(false);
+    };
+    loadStats();
+  }, []);
+
+  const fmt = (n) => new Intl.NumberFormat("en-GB", { style:"currency", currency:"GBP", maximumFractionDigits:0 }).format(n||0);
+
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#0f1e3d,#1B3A6B)", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif" }}>
+      <div style={{ padding:"60px 22px 24px", display:"flex", alignItems:"center", gap:12 }}>
+        <button onClick={onBack} style={{ background:"rgba(255,255,255,0.1)", border:"none", borderRadius:"50%", width:36, height:36, color:"white", fontSize:18, cursor:"pointer" }}>←</button>
+        <div>
+          <div style={{ color:"white", fontWeight:800, fontSize:22 }}>Admin Dashboard</div>
+          <div style={{ color:"rgba(255,255,255,0.6)", fontSize:12 }}>RoomWorth business intelligence</div>
+        </div>
+      </div>
+      <div style={{ background:"white", borderRadius:"26px 26px 0 0", marginTop:-10, padding:"24px 18px 48px", minHeight:"80vh" }}>
+        {loading ? (
+          <div style={{ textAlign:"center", padding:"60px 20px", color:"#94a3b8" }}>Loading stats...</div>
+        ) : stats ? (
+          <>
+            {/* Key Stats */}
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:16 }}>
+              {[
+                { label:"Total Users", value:stats.totalUsers, emoji:"👥" },
+                { label:"Properties", value:stats.totalProperties, emoji:"🏡" },
+                { label:"Items Scanned", value:stats.totalItems, emoji:"📸" },
+                { label:"Reports Generated", value:stats.totalReports, emoji:"📋" },
+              ].map(({label, value, emoji}) => (
+                <div key={label} style={{ background:"#f8fafc", borderRadius:16, padding:"16px", textAlign:"center", border:"1.5px solid #e2e8f0" }}>
+                  <div style={{ fontSize:28, marginBottom:6 }}>{emoji}</div>
+                  <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:24 }}>{value}</div>
+                  <div style={{ color:"#64748b", fontSize:11, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.5px" }}>{label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Broker Breakdown */}
+            <div style={{ background:"#f8fafc", borderRadius:16, padding:"16px", marginBottom:16, border:"1.5px solid #e2e8f0" }}>
+              <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:15, marginBottom:12 }}>👥 Users by Broker</div>
+              {Object.entries(stats.brokerBreakdown).map(([code, count]) => (
+                <div key={code} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                  <span style={{ color:"#1e293b", fontSize:13, fontWeight:600 }}>{code}</span>
+                  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                    <div style={{ width:100, height:8, background:"#e2e8f0", borderRadius:4, overflow:"hidden" }}>
+                      <div style={{ width:`${Math.round((count/stats.totalUsers)*100)}%`, height:"100%", background:"linear-gradient(90deg,#1B3A6B,#4AABBF)", borderRadius:4 }} />
+                    </div>
+                    <span style={{ color:"#64748b", fontSize:12, fontWeight:700, minWidth:20 }}>{count}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Recent Signups */}
+            <div style={{ background:"#f8fafc", borderRadius:16, padding:"16px", marginBottom:16, border:"1.5px solid #e2e8f0" }}>
+              <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:15, marginBottom:12 }}>🆕 Recent Signups</div>
+              {stats.recentUsers.map((u, i) => (
+                <div key={i} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8, paddingBottom:8, borderBottom: i < stats.recentUsers.length-1 ? "1px solid #e2e8f0" : "none" }}>
+                  <div>
+                    <div style={{ color:"#1e293b", fontSize:13, fontWeight:600 }}>{u.first_name} {u.last_name}</div>
+                    <div style={{ color:"#94a3b8", fontSize:11 }}>{u.email}</div>
+                  </div>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ color:"#64748b", fontSize:11 }}>{u.broker_code}</div>
+                    <div style={{ color:"#94a3b8", fontSize:10 }}>{new Date(u.created_at).toLocaleDateString("en-GB")}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Coverage Insights */}
+            <div style={{ background:"#f8fafc", borderRadius:16, padding:"16px", border:"1.5px solid #e2e8f0" }}>
+              <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:15, marginBottom:12 }}>📊 Coverage Insights</div>
+              <div style={{ color:"#64748b", fontSize:12, marginBottom:8 }}>Average rebuild value across all properties:</div>
+              <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:22, marginBottom:4 }}>
+                {fmt(stats.coverageData.reduce((s,p) => s + p.rebuild, 0) / (stats.coverageData.length || 1))}
+              </div>
+              <div style={{ color:"#64748b", fontSize:12, marginTop:12, marginBottom:4 }}>Expected average contents (10% of rebuild):</div>
+              <div style={{ color:"#4AABBF", fontWeight:800, fontSize:22 }}>
+                {fmt(stats.coverageData.reduce((s,p) => s + p.expected, 0) / (stats.coverageData.length || 1))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div style={{ textAlign:"center", padding:"60px 20px", color:"#94a3b8" }}>Failed to load stats.</div>
+        )}
+      </div>
     </div>
   );
 }
@@ -2714,7 +2853,8 @@ export default function RoomWorthApp() {
       {screen==="scanner"    && <ScannerScreen user={user} targetRoom={scanTargetRoom} properties={properties} onBack={()=>activeProperty?setScreen("rooms"):setScreen("properties")} onItemScanned={handleItemScanned} onNavigate={handleNavigate} />}
       {screen==="reports"    && <ReportsScreen properties={properties} onViewReport={handleViewReport} onNavigate={handleNavigate} />}
       {screen==="report"     && reportConfig && <ReportViewer type={reportConfig.type} property={properties.find(p=>p.id===reportConfig.property.id)||activeProperty||reportConfig.property} onBack={()=>setScreen(activeProperty?"rooms":"reports")} />}
-      {screen==="account"    && user && <AccountScreen user={user} onLogout={handleLogout} onNavigate={handleNavigate} />}
+      {screen==="account"    && user && <AccountScreen user={user} onLogout={handleLogout} onNavigate={handleNavigate} onAdmin={()=>setScreen("admin")} />}
+      {screen==="admin"      && user?.email==="troy@roomworth.co.uk" && <AdminDashboard onBack={()=>setScreen("account")} />}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
         @keyframes fadeUp { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
