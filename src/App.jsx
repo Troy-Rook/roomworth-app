@@ -2326,7 +2326,7 @@ function AdminDashboard({ onBack }) {
             </div>
 
             {/* Coverage Insights */}
-            <div style={{ background:"#f8fafc", borderRadius:16, padding:"16px", border:"1.5px solid #e2e8f0" }}>
+            <div style={{ background:"#f8fafc", borderRadius:16, padding:"16px", marginBottom:16, border:"1.5px solid #e2e8f0" }}>
               <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:15, marginBottom:12 }}>📊 Coverage Insights</div>
               <div style={{ color:"#64748b", fontSize:12, marginBottom:8 }}>Average rebuild value across all properties:</div>
               <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:22, marginBottom:4 }}>
@@ -2336,6 +2336,50 @@ function AdminDashboard({ onBack }) {
               <div style={{ color:"#4AABBF", fontWeight:800, fontSize:22 }}>
                 {fmt(stats.coverageData.reduce((s,p) => s + p.expected, 0) / (stats.coverageData.length || 1))}
               </div>
+            </div>
+
+            {/* AI Confidence Score */}
+            <div style={{ background:"#f8fafc", borderRadius:16, padding:"16px", marginBottom:16, border:"1.5px solid #e2e8f0" }}>
+              <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:15, marginBottom:12 }}>🎯 Average AI Confidence</div>
+              <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                <div style={{ flex:1, height:12, background:"#e2e8f0", borderRadius:6, overflow:"hidden" }}>
+                  <div style={{ width:`${stats.avgConfidence}%`, height:"100%", background:`linear-gradient(90deg,${stats.avgConfidence>75?"#22c55e":stats.avgConfidence>50?"#f59e0b":"#ef4444"},#4AABBF)`, borderRadius:6 }} />
+                </div>
+                <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:22, minWidth:50 }}>{stats.avgConfidence}%</div>
+              </div>
+              <div style={{ color:"#64748b", fontSize:11, marginTop:8 }}>{stats.avgConfidence >= 75 ? "🟢 High confidence across scans" : stats.avgConfidence >= 50 ? "🟡 Moderate confidence — some items may need review" : "🔴 Low confidence — clients may need to rescan some items"}</div>
+            </div>
+
+            {/* Most Scanned Rooms */}
+            <div style={{ background:"#f8fafc", borderRadius:16, padding:"16px", marginBottom:16, border:"1.5px solid #e2e8f0" }}>
+              <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:15, marginBottom:12 }}>🏠 Most Scanned Rooms</div>
+              {stats.topRooms.map(([room, count], i) => (
+                <div key={room} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                  <span style={{ color:"#1e293b", fontSize:13, fontWeight:600 }}>{i+1}. {room}</span>
+                  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                    <div style={{ width:80, height:8, background:"#e2e8f0", borderRadius:4, overflow:"hidden" }}>
+                      <div style={{ width:`${Math.round((count/stats.totalItems)*100)}%`, height:"100%", background:"linear-gradient(90deg,#1B3A6B,#4AABBF)", borderRadius:4 }} />
+                    </div>
+                    <span style={{ color:"#64748b", fontSize:12, fontWeight:700, minWidth:20 }}>{count}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Signup Trends */}
+            <div style={{ background:"#f8fafc", borderRadius:16, padding:"16px", marginBottom:16, border:"1.5px solid #e2e8f0" }}>
+              <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:15, marginBottom:12 }}>📈 Signup Trends</div>
+              {Object.entries(stats.signupTrends).slice(-6).map(([month, count]) => (
+                <div key={month} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                  <span style={{ color:"#1e293b", fontSize:13, fontWeight:600 }}>{month}</span>
+                  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                    <div style={{ width:100, height:8, background:"#e2e8f0", borderRadius:4, overflow:"hidden" }}>
+                      <div style={{ width:`${Math.round((count/stats.totalUsers)*100)}%`, height:"100%", background:"linear-gradient(90deg,#1B3A6B,#4AABBF)", borderRadius:4 }} />
+                    </div>
+                    <span style={{ color:"#64748b", fontSize:12, fontWeight:700, minWidth:20 }}>{count}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </>
         ) : (
