@@ -2198,6 +2198,7 @@ function AdminDashboard({ onBack }) {
         const { data: properties } = await supabase.from("properties").select("*");
         const { data: items } = await supabase.from("items").select("*");
         const { data: reports } = await supabase.from("reports").select("*");
+        const { data: rooms } = await supabase.from("rooms").select("*");
 
         // Users by broker code
         const brokerBreakdown = users.reduce((acc, u) => {
@@ -2217,6 +2218,28 @@ function AdminDashboard({ onBack }) {
           return { expected: expectedFromRebuild, rebuild };
         }).filter(p => p.rebuild > 0);
 
+        // Average confidence score
+        const confidenceItems = items.filter(i => i.confidence > 0);
+        const avgConfidence = confidenceItems.length > 0
+          ? Math.round(confidenceItems.reduce((s, i) => s + i.confidence, 0) / confidenceItems.length)
+          : 0;
+
+        // Most scanned rooms
+        const roomCounts = items.reduce((acc, i) => {
+          const room = rooms.find(r => r.id === i.room_id);
+          const roomName = room?.name || "Unknown";
+          acc[roomName] = (acc[roomName] || 0) + 1;
+          return acc;
+        }, {});
+        const topRooms = Object.entries(roomCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+        // Signup trends (last 6 months)
+        const signupTrends = users.reduce((acc, u) => {
+          const month = new Date(u.created_at).toLocaleDateString("en-GB", { month:"short", year:"numeric" });
+          acc[month] = (acc[month] || 0) + 1;
+          return acc;
+        }, {});
+
         setStats({
           totalUsers: users.length,
           totalProperties: properties.length,
@@ -2225,6 +2248,9 @@ function AdminDashboard({ onBack }) {
           brokerBreakdown,
           recentUsers,
           coverageData,
+          avgConfidence,
+          topRooms,
+          signupTrends,
         });
       } catch(e) {
         console.error("Admin load error:", e);
@@ -2662,6 +2688,7 @@ export default function RoomWorthApp() {
         const brokerCode = userData.broker?.code || "ROOMWORTH26";
         const isDirectClient = brokerCode === "ROOMWORTH26";
         const isDemoClient = brokerCode === "DEMO26";
+        const isAdmin = brokerCode === "ADMIN12071989";
         const expiryDays = isDirectClient ? 30 : isDemoClient ? 7 : null;
         const { data: newUser } = await supabase.from("users").insert({
           email: userData.email,
