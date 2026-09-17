@@ -1137,7 +1137,8 @@ function RoomsScreen({ property, onUpdateProperty, onBack, onScanItem, onViewRep
         value: item.value,
         confidence: 100,
         specialist: false,
-        is_misc: true
+        is_misc: true,
+        image: item.image || null
       });
     } catch(e) { console.error("Save misc item error:", e); }
   };
