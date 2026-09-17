@@ -1757,7 +1757,7 @@ YOU MUST respond with ONLY the following JSON object and absolutely nothing else
             {previewSrc && <div style={{ color:"#059669", fontSize:12, fontWeight:600, marginTop:9, display:"flex", alignItems:"center", gap:5 }}>✓ Photo ready to scan</div>}
           </Card>
         )}
-        <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{ display:"none" }} onChange={e=>handleFile(e.target.files[0])} />
+        <input ref={fileRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e=>handleFile(e.target.files[0])} />
 
         {/* Item details */}
         {!result && (
