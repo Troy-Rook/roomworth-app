@@ -2623,7 +2623,13 @@ export default function RoomWorthApp() {
   });
   const [screen, setScreen] = useState(() => {
     const saved = localStorage.getItem("rw_user");
-    return saved ? "properties" : "auth";
+    if (!saved) return "auth";
+    const u = JSON.parse(saved);
+    const needsExpiry = u?.brokerCode === "ROOMWORTH26" || u?.brokerCode === "DEMO26";
+    if (needsExpiry && u?.subscriptionExpiresAt && new Date(u.subscriptionExpiresAt) < new Date()) {
+      return "expired";
+    }
+    return "properties";
   });
   const [properties, setProperties]         = useState([]);
   const [activeProperty, setActiveProperty] = useState(null);
