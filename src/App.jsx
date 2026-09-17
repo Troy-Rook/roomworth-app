@@ -886,7 +886,7 @@ function PropertiesScreen({ user, properties, setProperties, onViewProperty, onN
             <button onClick={()=>setShowAdd(true)} style={{ background:"linear-gradient(135deg,#1B3A6B,#2563ab)", border:"none", borderRadius:14, padding:"13px 24px", color:"white", fontSize:14, fontWeight:700, cursor:"pointer" }}>+ Add Property</button>
           </div>
         ) : properties.map(p => {
-          const contents = p.rooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+i.value*i.qty,0),0);
+          const contents = p.rooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0);
           const pct = Math.min(100,Math.round((contents/p.recommendedContents)*100));
           const pc = progressColor(pct);
           return (
@@ -1100,7 +1100,7 @@ function RoomsScreen({ property, onUpdateProperty, onBack, onScanItem, onViewRep
   const [deleteRoom, setDeleteRoom]   = useState(null);
   const [miscRoom, setMiscRoom]       = useState(null);
 
-  const totalContents = property.rooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+i.value*i.qty,0),0);
+  const totalContents = property.rooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0);
   const pct = Math.min(100,Math.round((totalContents/property.recommendedContents)*100));
   const pc = progressColor(pct);
 
@@ -1238,9 +1238,7 @@ function RoomsScreen({ property, onUpdateProperty, onBack, onScanItem, onViewRep
           onClose={()=>setOpenRoom(null)}
           onScan={()=>{ onScanItem(openRoom); setOpenRoom(null); }}
           onDeleteItem={async (roomId,itemId)=>{
-            console.log("Deleting item:", itemId);
-            const { error } = await supabase.from("items").delete().eq("id", itemId);
-            console.log("Delete result:", error);
+            await supabase.from("items").delete().eq("id", itemId);
             updateRooms(property.rooms.map(r=>r.id===roomId?{...r,items:r.items.filter(i=>i.id!==itemId)}:r));
             setOpenRoom(prev=>prev?{...prev,items:prev.items.filter(i=>i.id!==itemId)}:null);
           }}
@@ -1862,7 +1860,7 @@ function ReportsScreen({ properties, onViewReport, onNavigate }) {
           </div>
         ) : properties.map(p => {
           const items = p.rooms.reduce((s,r)=>s+r.items.length,0);
-          const contents = p.rooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+i.value*i.qty,0),0);
+          const contents = p.rooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0);
           return (
             <Card key={p.id}>
               <div style={{ color:"#1B3A6B", fontWeight:800, fontSize:15, marginBottom:3 }}>{p.name}</div>
