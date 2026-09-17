@@ -1206,7 +1206,7 @@ function RoomsScreen({ property, onUpdateProperty, onBack, onScanItem, onViewRep
         {/* Room grid */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:11 }}>
           {property.rooms.map(room => {
-            const roomTotal = room.items.filter(i=>!i.specialist).reduce((s,i)=>s+i.value*i.qty,0);
+            const roomTotal = room.items.filter(i=>!i.specialist).reduce((s,i)=>s+(i.override_value||i.value)*i.qty,0);
             return (
               <div key={room.id} style={{ background:"white", borderRadius:18, overflow:"hidden", boxShadow:"0 2px 14px rgba(27,58,107,0.08)", border:"1px solid #e8eef5" }}>
                 <div style={{ height:4, background:room.color }} />
