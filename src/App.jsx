@@ -1340,7 +1340,7 @@ function RoomItemCard({ item, roomId, onDelete, onOverride }) {
 }
 
 function RoomModal({ room, onClose, onScan, onDeleteItem, onOverrideItem }) {
-  const total = room.items.filter(i=>!i.specialist).reduce((s,i)=>s+i.value*i.qty,0);
+  const total = room.items.filter(i=>!i.specialist).reduce((s,i)=>s+(i.override_value||i.value)*i.qty,0);
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(15,30,60,0.55)", backdropFilter:"blur(4px)", zIndex:50, display:"flex", flexDirection:"column", justifyContent:"flex-end" }}>
       <div style={{ background:"white", borderRadius:"22px 22px 0 0", maxHeight:"82vh", overflowY:"auto", paddingBottom:30 }}>
