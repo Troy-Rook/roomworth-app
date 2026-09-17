@@ -133,7 +133,7 @@ const InputField = ({ label, value, onChange, placeholder, type="text", multilin
       ? <textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={2}
           style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 15px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box", fontFamily:"inherit", resize:"none" }} />
       : <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}
-          style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 15px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box", fontFamily:"inherit" }} />
+          style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 15px", color:"#1e293b", fontSize:16, outline:"none", boxSizing:"border-box", fontFamily:"inherit" }} />
     }
   </div>
 );
