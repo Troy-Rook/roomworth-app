@@ -2205,7 +2205,7 @@ function AccountScreen({ user, onLogout, onNavigate, onAdmin }) {
           <button onClick={onAdmin} style={{ width:"100%", background:"linear-gradient(135deg,#1B3A6B,#4AABBF)", border:"none", borderRadius:16, padding:"15px", color:"white", fontSize:14, fontWeight:700, cursor:"pointer", marginTop:8, marginBottom:8, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>📊 Admin Dashboard</button>
         )}
         <button onClick={onLogout} style={{ width:"100%", background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:16, padding:"15px", color:"#dc2626", fontSize:14, fontWeight:700, cursor:"pointer", marginTop:8, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}><SvgIcon name="signout" size={16} color="#dc2626"/> Sign Out</button>
-        <div style={{ textAlign:"center", color:"#94a3b8", fontSize:11, marginTop:16 }}>RoomWorth v1.0.0 · © {new Date().getFullYear()} RoomWorth Limited</div>
+        <div style={{ textAlign:"center", color:"#94a3b8", fontSize:11, marginTop:16 }}>RoomWorth v1.0.0 · © {new Date().getFullYear()} Room Worth</div>
       </div>
       <BottomNav active="account" onNavigate={onNavigate} />
     </div>
