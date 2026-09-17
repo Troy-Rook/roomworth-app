@@ -185,7 +185,6 @@ const NavIcon = ({ id, active }) => {
 const BottomNav = ({ active, onNavigate }) => {
   const tabs = [
     { id:"properties", label:"Properties" },
-    { id:"scanner",    label:"Scan Item"  },
     { id:"reports",    label:"Reports"    },
     { id:"account",    label:"Account"    },
   ];
