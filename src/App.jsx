@@ -307,9 +307,7 @@ function RoomSelectorAdd({ properties, onAdd, onScanAnother }) {
         </select>
       </div>
       <div style={{ display:"flex", gap:9 }}>
-        <button onClick={onScanAnother} style={{ flex:1, background:"white", border:"1.5px solid #e2e8f0", borderRadius:13, padding:"13px", color:"#1B3A6B", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-          <SvgIcon name="camera" size={14} color="#1B3A6B" /> Scan Another
-        </button>
+
         <button onClick={()=>selRoom && onAdd(selRoom.id, selRoom.name)}
           disabled={!selRoom}
           style={{ flex:1, background:selRoom?"linear-gradient(135deg,#4AABBF,#0891b2)":"#e2e8f0", border:"none", borderRadius:13, padding:"13px", color:selRoom?"white":"#94a3b8", fontSize:13, fontWeight:700, cursor:selRoom?"pointer":"not-allowed", display:"flex", alignItems:"center", justifyContent:"center", gap:6, boxShadow:selRoom?"0 4px 14px rgba(74,171,191,0.35)":"none" }}>
