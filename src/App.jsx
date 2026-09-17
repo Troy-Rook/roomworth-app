@@ -2038,7 +2038,7 @@ function ReportViewer({ type, property, onBack }) {
         {type==="broker" ? (
           /* BROKER: room by room */
           property.rooms.map(room=>{
-            const roomTotal=room.items.filter(i=>!i.specialist).reduce((s,i)=>s+i.value*i.qty,0);
+            const roomTotal=room.items.filter(i=>!i.specialist).reduce((s,i)=>s+(i.override_value||i.value)*i.qty,0);
             if(room.items.length===0) return null;
             return (
               <div key={room.id} style={{ background:"white", borderRadius:18, overflow:"hidden", border:"1px solid #e8eef5", boxShadow:"0 2px 10px rgba(27,58,107,0.06)", marginBottom:12 }}>
