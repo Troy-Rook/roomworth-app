@@ -1826,9 +1826,7 @@ YOU MUST respond with ONLY the following JSON object and absolutely nothing else
             {/* Room selector if no target room, or add button if target room */}
             {targetRoom ? (
               <div style={{ display:"flex", gap:9 }}>
-                <button onClick={()=>{setResult(null);setPreview(null);setImageB64(null);setItemName("");setQty(1);setError(null);}} style={{ flex:1, background:"white", border:"1.5px solid #e2e8f0", borderRadius:13, padding:"13px", color:"#1B3A6B", fontSize:13, fontWeight:700, cursor:"pointer" }}>
-                  <SvgIcon name="camera" size={14} color="#1B3A6B" /> Scan Another
-                </button>
+
                 <button onClick={()=>handleAddToRoom(targetRoom.id, targetRoom.name)} style={{ flex:1, background:"linear-gradient(135deg,#4AABBF,#0891b2)", border:"none", borderRadius:13, padding:"13px", color:"white", fontSize:13, fontWeight:700, cursor:"pointer", boxShadow:"0 4px 14px rgba(74,171,191,0.35)", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                   <SvgIcon name="home" size={14} color="white" /> Add to {targetRoom.name}
                 </button>
