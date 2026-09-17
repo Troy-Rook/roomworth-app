@@ -1153,7 +1153,8 @@ function RoomsScreen({ property, onUpdateProperty, onBack, onScanItem, onViewRep
     } catch(e) { console.error("Delete room error:", e); }
   };
 
-  const handleOverrideItem = (roomId, itemId, overrideVal) => {
+  const handleOverrideItem = async (roomId, itemId, overrideVal) => {
+    await supabase.from("items").update({ override_value: overrideVal }).eq("id", itemId);
     updateRooms(property.rooms.map(r => r.id===roomId
       ? {...r, items: r.items.map(i => i.id===itemId ? {...i, override_value: overrideVal} : i)}
       : r
