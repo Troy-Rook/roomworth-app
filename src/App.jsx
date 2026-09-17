@@ -1238,7 +1238,9 @@ function RoomsScreen({ property, onUpdateProperty, onBack, onScanItem, onViewRep
           onClose={()=>setOpenRoom(null)}
           onScan={()=>{ onScanItem(openRoom); setOpenRoom(null); }}
           onDeleteItem={async (roomId,itemId)=>{
-            await supabase.from("items").delete().eq("id", itemId);
+            console.log("Deleting item:", itemId);
+            const { error } = await supabase.from("items").delete().eq("id", itemId);
+            console.log("Delete result:", error);
             updateRooms(property.rooms.map(r=>r.id===roomId?{...r,items:r.items.filter(i=>i.id!==itemId)}:r));
             setOpenRoom(prev=>prev?{...prev,items:prev.items.filter(i=>i.id!==itemId)}:null);
           }}
