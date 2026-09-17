@@ -1375,8 +1375,21 @@ function MiscItemModal({ room, onAdd, onClose }) {
   const [name, setName]   = useState("");
   const [value, setValue] = useState("");
   const [qty, setQty]     = useState("1");
+  const [photo, setPhoto] = useState(null);
+  const [photoB64, setPhotoB64] = useState(null);
+  const photoRef = useRef(null);
 
   const isValid = name.trim() && Number(value) > 0;
+
+  const handlePhoto = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPhoto(e.target.result);
+      setPhotoB64(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // SVG bundle icon as a data URL for misc items
   const bundleIconSvg = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><rect width='80' height='80' rx='16' fill='%23f0f5ff'/><rect x='18' y='32' width='44' height='30' rx='4' fill='%231B3A6B' opacity='0.15'/><rect x='22' y='28' width='36' height='34' rx='4' fill='none' stroke='%231B3A6B' stroke-width='2.5'/><path d='M30 28 Q30 20 40 20 Q50 20 50 28' fill='none' stroke='%231B3A6B' stroke-width='2.5' stroke-linecap='round'/><path d='M22 40 L58 40' stroke='%231B3A6B' stroke-width='2' opacity='0.4'/><path d='M33 34 L47 34' stroke='%234AABBF' stroke-width='2.5' stroke-linecap='round'/></svg>`;
@@ -1395,7 +1408,7 @@ function MiscItemModal({ room, onAdd, onClose }) {
       confidence: 100,
       specialist: false,
       specialist_reason: "",
-      image: bundleIconSvg,
+      image: photoB64 || bundleIconSvg,
       isMisc: true,
     };
     onAdd(newItem);
@@ -1422,6 +1435,22 @@ function MiscItemModal({ room, onAdd, onClose }) {
             <div style={{ color:"#64748b", fontSize:12, marginTop:1 }}>{room.name}</div>
           </div>
           <button onClick={onClose} style={{ background:"#f1f5f9", border:"none", borderRadius:"50%", width:34, height:34, cursor:"pointer", fontSize:18, color:"#64748b", display:"flex", alignItems:"center", justifyContent:"center" }}>×</button>
+        </div>
+
+        {/* Optional Photo */}
+        <div style={{ padding:"16px 20px 0" }}>
+          <label style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:8 }}>📷 Photo (Optional)</label>
+          {photo ? (
+            <div style={{ position:"relative", borderRadius:14, overflow:"hidden", marginBottom:4 }}>
+              <img src={photo} alt="item" style={{ width:"100%", maxHeight:160, objectFit:"cover", display:"block" }} />
+              <button onClick={()=>{setPhoto(null);setPhotoB64(null);}} style={{ position:"absolute", top:8, right:8, background:"rgba(0,0,0,0.55)", color:"white", border:"none", borderRadius:"50%", width:28, height:28, cursor:"pointer", fontSize:14, display:"flex", alignItems:"center", justifyContent:"center" }}>×</button>
+            </div>
+          ) : (
+            <div onClick={()=>photoRef.current.click()} style={{ border:"2px dashed #cbd5e1", borderRadius:14, background:"#f8fafc", cursor:"pointer", padding:"16px", textAlign:"center" }}>
+              <div style={{ color:"#94a3b8", fontSize:12, fontWeight:600 }}>Tap to add a photo</div>
+            </div>
+          )}
+          <input ref={photoRef} type="file" accept="image/*" style={{ display:"none" }} onChange={e=>handlePhoto(e.target.files[0])} />
         </div>
 
         <div style={{ padding:"20px" }}>
