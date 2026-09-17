@@ -1244,8 +1244,8 @@ function RoomsScreen({ property, onUpdateProperty, onBack, onScanItem, onViewRep
             updateRooms(property.rooms.map(r=>r.id===roomId?{...r,items:r.items.filter(i=>i.id!==itemId)}:r));
             setOpenRoom(prev=>prev?{...prev,items:prev.items.filter(i=>i.id!==itemId)}:null);
           }}
-          onOverrideItem={(roomId,itemId,val)=>{
-            handleOverrideItem(roomId,itemId,val);
+          onOverrideItem={async (roomId,itemId,val)=>{
+            await handleOverrideItem(roomId,itemId,val);
             setOpenRoom(prev=>prev?{...prev,items:prev.items.map(i=>i.id===itemId?{...i,override_value:val}:i)}:null);
           }}
         />
