@@ -131,7 +131,7 @@ const InputField = ({ label, value, onChange, placeholder, type="text", multilin
     {label && <label style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:7 }}>{label}</label>}
     {multiline
       ? <textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={2}
-          style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 15px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box", fontFamily:"inherit", resize:"none" }} />
+          style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 15px", color:"#1e293b", fontSize:16, outline:"none", boxSizing:"border-box", fontFamily:"inherit", resize:"none" }} />
       : <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}
           style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 15px", color:"#1e293b", fontSize:16, outline:"none", boxSizing:"border-box", fontFamily:"inherit" }} />
     }
@@ -520,14 +520,14 @@ function ResetPasswordScreen({ token, email, onDone }) {
               <label style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:7 }}>New Password</label>
               <div style={{ position:"relative" }}>
                 <input type={showPass?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Min 8 characters"
-                  style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 46px 13px 15px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box" }} />
+                  style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 46px 13px 15px", color:"#1e293b", fontSize:16, outline:"none", boxSizing:"border-box" }} />
                 <button onClick={()=>setShowPass(!showPass)} style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:16, color:"#94a3b8" }}>{showPass?"🙈":"👁"}</button>
               </div>
             </div>
             <div style={{ marginBottom:20 }}>
               <label style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:7 }}>Confirm Password</label>
               <input type={showPass?"text":"password"} value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} placeholder="Repeat your password"
-                style={{ width:"100%", background:"#f8fafc", border:`1.5px solid ${confirmPassword && confirmPassword!==password?"#fca5a5":"#e2e8f0"}`, borderRadius:12, padding:"13px 15px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box" }} />
+                style={{ width:"100%", background:"#f8fafc", border:`1.5px solid ${confirmPassword && confirmPassword!==password?"#fca5a5":"#e2e8f0"}`, borderRadius:12, padding:"13px 15px", color:"#1e293b", fontSize:16, outline:"none", boxSizing:"border-box" }} />
             </div>
             {error && <div style={{ background:"#fef2f2", border:"1.5px solid #fca5a5", borderRadius:12, padding:"11px 14px", color:"#dc2626", fontSize:12, marginBottom:12 }}>⚠️ {error}</div>}
             <PrimaryBtn onClick={handleReset} loading={loading} disabled={!password||!confirmPassword}>Update Password →</PrimaryBtn>
@@ -763,16 +763,16 @@ function AuthScreen({ onLogin }) {
                 )}
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
                   <div><label style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:7 }}>First Name</label>
-                    <input value={firstName} onChange={e=>setFirstName(e.target.value)} placeholder="James" style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 13px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box" }} /></div>
+                    <input value={firstName} onChange={e=>setFirstName(e.target.value)} placeholder="James" style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 13px", color:"#1e293b", fontSize:16, outline:"none", boxSizing:"border-box" }} /></div>
                   <div><label style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:7 }}>Last Name</label>
-                    <input value={lastName} onChange={e=>setLastName(e.target.value)} placeholder="Davies" style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 13px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box" }} /></div>
+                    <input value={lastName} onChange={e=>setLastName(e.target.value)} placeholder="Davies" style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 13px", color:"#1e293b", fontSize:16, outline:"none", boxSizing:"border-box" }} /></div>
                 </div>
                 <div style={{ marginTop:10 }}><InputField label="Email" type="email" value={email} onChange={setEmail} placeholder="james@email.com" /></div>
                 <div style={{ marginBottom:12 }}>
                   <label style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:7 }}>Password</label>
                   <div style={{ position:"relative" }}>
                     <input type={showPass?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Min 8 characters"
-                      style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 46px 13px 15px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box" }} />
+                      style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 46px 13px 15px", color:"#1e293b", fontSize:16, outline:"none", boxSizing:"border-box" }} />
                     <button onClick={()=>setShowPass(!showPass)} style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:16, color:"#94a3b8" }}>{showPass?"🙈":"👁"}</button>
                   </div>
                 </div>
@@ -780,7 +780,7 @@ function AuthScreen({ onLogin }) {
                   <label style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:7 }}>Confirm Password</label>
                   <div style={{ position:"relative" }}>
                     <input type={showPass?"text":"password"} value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} placeholder="Repeat your password"
-                      style={{ width:"100%", background:"#f8fafc", border:`1.5px solid ${confirmPassword && confirmPassword!==password?"#fca5a5":"#e2e8f0"}`, borderRadius:12, padding:"13px 15px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box" }} />
+                      style={{ width:"100%", background:"#f8fafc", border:`1.5px solid ${confirmPassword && confirmPassword!==password?"#fca5a5":"#e2e8f0"}`, borderRadius:12, padding:"13px 15px", color:"#1e293b", fontSize:16, outline:"none", boxSizing:"border-box" }} />
                   </div>
                 </div>
                 {formError && <div style={{ background:"#fef2f2", border:"1.5px solid #fca5a5", borderRadius:12, padding:"11px 14px", color:"#dc2626", fontSize:12, marginBottom:12 }}>⚠️ {formError}</div>}
@@ -1010,7 +1010,7 @@ function PropertyModal({ existing, onSave, onClose }) {
   const fullAddress = [line1, street, county, city, postcode].filter(Boolean).join(", ");
   const isValid = name.trim() && line1.trim() && street.trim() && postcode.trim() && rebuildNum > 0;
 
-  const inpStyle = { width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"12px 14px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box", fontFamily:"inherit" };
+  const inpStyle = { width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"12px 14px", color:"#1e293b", fontSize:16, outline:"none", boxSizing:"border-box", fontFamily:"inherit" };
   const lblStyle = { color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:7 };
 
   const save = () => {
@@ -1079,7 +1079,7 @@ function PropertyModal({ existing, onSave, onClose }) {
             <div style={{ position:"relative" }}>
               <span style={{ position:"absolute", left:13, top:"50%", transform:"translateY(-50%)", color:"#64748b", fontWeight:700 }}>£</span>
               <input type="number" value={rebuild} onChange={e=>setRebuild(e.target.value)} placeholder="1850000"
-                style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 13px 13px 26px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box" }} />
+                style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 13px 13px 26px", color:"#1e293b", fontSize:16, outline:"none", boxSizing:"border-box" }} />
             </div>
             <div style={{ background:"#f0f9ff", border:"1px solid #bae6fd", borderRadius:12, padding:"12px 14px", marginTop:10 }}>
               <div style={{ color:"#0369a1", fontSize:12, fontWeight:600, marginBottom:4 }}>💡 Why do we ask for this?</div>
