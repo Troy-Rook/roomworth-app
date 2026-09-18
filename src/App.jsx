@@ -705,6 +705,7 @@ function AuthScreen({ onLogin }) {
                 <button onClick={()=>setShowPass(!showPass)} style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:16, color:"#94a3b8" }}>{showPass?"🙈":"👁"}</button>
               </div>
             </div>
+            {formError && <div style={{ background:"#fef2f2", border:"1.5px solid #fca5a5", borderRadius:12, padding:"11px 14px", color:"#dc2626", fontSize:12, marginBottom:12 }}>⚠️ {formError}</div>}
             <PrimaryBtn onClick={handleLogin} loading={loading} disabled={!email||!password}>Sign In →</PrimaryBtn>
             <div style={{ textAlign:"center", marginTop:12 }}>
               <button onClick={()=>switchMode("forgot")} style={{ background:"none", border:"none", color:"#94a3b8", fontSize:12, cursor:"pointer", fontWeight:500 }}>Forgot your password?</button>
