@@ -701,7 +701,7 @@ function AuthScreen({ onLogin }) {
               <div style={{ position:"relative" }}>
                 <input type={showPass?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)}
                   placeholder="Your password"
-                  style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 46px 13px 15px", color:"#1e293b", fontSize:14, outline:"none", boxSizing:"border-box" }} />
+                  style={{ width:"100%", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:12, padding:"13px 46px 13px 15px", color:"#1e293b", fontSize:16, outline:"none", boxSizing:"border-box" }} />
                 <button onClick={()=>setShowPass(!showPass)} style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:16, color:"#94a3b8" }}>{showPass?"🙈":"👁"}</button>
               </div>
             </div>
