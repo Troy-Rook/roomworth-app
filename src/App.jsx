@@ -2469,7 +2469,7 @@ function PrivacyPage({ user, onBack }) {
   const [showDelete, setShowDelete] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   return (
-    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0f5fb,#e8f1f8)", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif", paddingBottom:40 }}>
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0f5fb,#e8f1f8)", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif", paddingBottom:40, overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
       <AppHeader title="Privacy & Security" subtitle="Your data and account security" onBack={onBack} />
       <div style={{ maxWidth:500, margin:"0 auto", padding:"20px 14px" }}>
         <div style={{ background:"linear-gradient(135deg,#1B3A6B,#1e4d8c)", borderRadius:18, padding:"18px", marginBottom:16, display:"flex", gap:12, alignItems:"center" }}>
