@@ -614,6 +614,11 @@ function AuthScreen({ onLogin }) {
     setLoading(true);
     try {
       const { data: dbUser } = await supabase.from("users").select("first_name,last_name,broker_code").eq("email", email.trim()).maybeSingle();
+      if (!dbUser) {
+        setFormError("No account found with this email. Please sign up first.");
+        setLoading(false);
+        return;
+      }
       const brokerCode = dbUser?.broker_code || "ROOMWORTH26";
       onLogin({ 
         firstName: dbUser?.first_name || email.trim().split("@")[0], 
@@ -622,7 +627,7 @@ function AuthScreen({ onLogin }) {
         broker: BROKER_CODES[brokerCode] || BROKER_CODES["ROOMWORTH26"]
       });
     } catch(e) {
-      onLogin({ firstName: email.trim().split("@")[0], lastName: "", email: email.trim(), broker: BROKER_CODES["ROOMWORTH26"] });
+      setFormError("Something went wrong. Please try again.");
     }
     setLoading(false);
   };
