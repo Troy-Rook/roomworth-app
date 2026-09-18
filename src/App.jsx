@@ -2467,6 +2467,7 @@ function NotificationsPage({ user, onBack }) {
 // ── Privacy & Security Page ───────────────────────────────────────────────────
 function PrivacyPage({ user, onBack }) {
   const [showDelete, setShowDelete] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
   return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#f0f5fb,#e8f1f8)", fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif", paddingBottom:40 }}>
       <AppHeader title="Privacy & Security" subtitle="Your data and account security" onBack={onBack} />
@@ -2513,6 +2514,7 @@ function PrivacyPage({ user, onBack }) {
         <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:16, padding:"18px", marginBottom:12 }}>
           <div style={{ color:"#dc2626", fontWeight:800, fontSize:15, marginBottom:8 }}>Danger Zone</div>
           <div style={{ color:"#374151", fontSize:13, marginBottom:14, lineHeight:1.5 }}>Deleting your account permanently removes all your data. This cannot be undone.</div>
+          {deleteSuccess && <div style={{ background:"#f0fdf4", border:"1.5px solid #bbf7d0", borderRadius:12, padding:"11px 14px", color:"#15803d", fontSize:13, fontWeight:600, marginBottom:12 }}>✅ Your deletion request has been received. We will be in touch within 48 hours.</div>}
           {!showDelete ? (
             <button onClick={()=>setShowDelete(true)} style={{ background:"white", border:"1.5px solid #fecaca", borderRadius:12, padding:"11px 18px", color:"#dc2626", fontSize:13, fontWeight:700, cursor:"pointer" }}>Request Account Deletion</button>
           ) : (
@@ -2534,8 +2536,8 @@ function PrivacyPage({ user, onBack }) {
       })
     });
   } catch(e) { console.error("Alert error:", e); }
-  alert("Your deletion request has been received. We will be in touch within 48 hours."); 
-  setShowDelete(false); 
+  setShowDelete(false);
+  setDeleteSuccess(true); 
 }} style={{ flex:1, background:"#dc2626", border:"none", borderRadius:10, padding:"11px", color:"white", fontWeight:700, cursor:"pointer" }}>Delete Account</button>
               </div>
             </div>
