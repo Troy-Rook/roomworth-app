@@ -1009,7 +1009,7 @@ function PropertyModal({ existing, onSave, onClose }) {
     if (!addr) return { line1:"", street:"", county:"", city:"", postcode:"" };
     const parts = addr.split(",").map(s=>s.trim());
     // Detect postcode by UK postcode pattern
-    const postcodeRegex = /^[A-Z]{1,2}[0-9][0-9A-Z]?\s?[0-9][A-Z]{2}$/i;
+    const postcodeRegex = /^[A-Z]{1,2}[0-9][0-9A-Z]?\s*[0-9][A-Z]{2}$/i;
     const postcodeIdx = parts.findIndex(p => postcodeRegex.test(p.trim()));
     if (postcodeIdx !== -1) {
       const postcode = parts[postcodeIdx];
