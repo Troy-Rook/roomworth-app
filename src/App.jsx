@@ -838,6 +838,19 @@ function PropertiesScreen({ user, properties, setProperties, onViewProperty, onN
         }
       } catch(e) { console.error("Save new property error:", e); }
     }
+    // Existing property — update in Supabase
+    if (!isNew && user?.id && prop.id) {
+      try {
+        await supabase.from("properties").update({
+          name: prop.name,
+          address: prop.address,
+          type: prop.type,
+          rebuild_value: prop.rebuildValue,
+          recommended_contents: prop.recommendedContents,
+          photo: prop.photo || null
+        }).eq("id", prop.id);
+      } catch(e) { console.error("Update existing property error:", e); }
+    }
     setProperties(prev => prev.find(p=>p.id===prop.id) ? prev.map(p=>p.id===prop.id?prop:p) : [...prev,prop]);
   };
 
@@ -2935,6 +2948,19 @@ export default function RoomWorthApp() {
           return;
         }
       } catch(e) { console.error("Save new property error:", e); }
+    }
+    // Existing property — update in Supabase
+    if (!isNew && user?.id && prop.id) {
+      try {
+        await supabase.from("properties").update({
+          name: prop.name,
+          address: prop.address,
+          type: prop.type,
+          rebuild_value: prop.rebuildValue,
+          recommended_contents: prop.recommendedContents,
+          photo: prop.photo || null
+        }).eq("id", prop.id);
+      } catch(e) { console.error("Update existing property error:", e); }
     }
     setProperties(prev => prev.find(p=>p.id===prop.id) ? prev.map(p=>p.id===prop.id?prop:p) : [...prev,prop]);
   };
