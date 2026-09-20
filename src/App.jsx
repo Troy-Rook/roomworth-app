@@ -1819,6 +1819,9 @@ YOU MUST respond with ONLY the following JSON object and absolutely nothing else
         {!result && (
           <Card>
             <InputField label="Item Name" value={itemName} onChange={setItemName} placeholder="e.g. Samsung 65 inch TV" />
+            <div style={{ background:"#f0f9ff", border:"1px solid #bae6fd", borderRadius:10, padding:"9px 12px", marginTop:-6, marginBottom:12 }}>
+              <div style={{ color:"#0369a1", fontSize:11, lineHeight:1.5 }}>💡 <strong>Tip:</strong> include the brand and model number for a more accurate valuation — e.g. <em>"Ikea artificial plant"</em> or <em>"Samsung QE65 TV"</em></div>
+            </div>
             <label style={{ color:"#64748b", fontSize:11, fontWeight:700, letterSpacing:"0.8px", textTransform:"uppercase", display:"block", marginBottom:8 }}>Quantity</label>
             <div style={{ display:"inline-flex", alignItems:"center", background:"#f8fafc", border:"1.5px solid #e2e8f0", borderRadius:11 }}>
               <button onClick={()=>setQty(Math.max(1,quantity-1))} style={{ background:"none", border:"none", width:42, height:44, fontSize:20, color:"#1B3A6B", cursor:"pointer", fontWeight:700 }}>−</button>
