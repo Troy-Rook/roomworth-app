@@ -2747,22 +2747,24 @@ export default function RoomWorthApp() {
   const loadProperties = async (userId) => {
     setDbLoading(true);
     try {
-      // Fetch all data in 3 parallel queries instead of cascading calls
-      const [{ data: props, error }, { data: allRooms }, { data: allItems }] = await Promise.all([
-        supabase.from("properties").select("*").eq("user_id", userId).order("created_at", { ascending: true }),
-        supabase.from("rooms").select("*").in("property_id", 
-          (await supabase.from("properties").select("id").eq("user_id", userId)).data?.map(p => p.id) || []
-        ).order("created_at", { ascending: true }),
+      // Step 1: fetch properties
+      const { data: props, error } = await supabase
+        .from("properties").select("*").eq("user_id", userId).order("created_at", { ascending: true });
+      if (error) throw error;
+      if (!props || props.length === 0) { setProperties([]); return; }
+
+      const propIds = props.map(p => p.id);
+
+      // Step 2: fetch all rooms and items in parallel (2 queries total, not N*M)
+      const [{ data: allRooms }, { data: allItems }] = await Promise.all([
+        supabase.from("rooms").select("*").in("property_id", propIds).order("created_at", { ascending: true }),
         supabase.from("items").select("*").in("room_id",
-          (await supabase.from("rooms").select("id").in("property_id",
-            (await supabase.from("properties").select("id").eq("user_id", userId)).data?.map(p => p.id) || []
-          )).data?.map(r => r.id) || []
+          (await supabase.from("rooms").select("id").in("property_id", propIds)).data?.map(r => r.id) || []
         ).order("created_at", { ascending: true })
       ]);
-      if (error) throw error;
 
-      // Assemble the data structure in memory — no more network round trips
-      const fullProps = (props || []).map(p => {
+      // Step 3: assemble in memory
+      const fullProps = props.map(p => {
         const propRooms = (allRooms || []).filter(r => r.property_id === p.id);
         const fullRooms = propRooms.map(r => {
           const roomItems = (allItems || []).filter(i => i.room_id === r.id)
