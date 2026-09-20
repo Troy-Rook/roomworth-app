@@ -1008,15 +1008,14 @@ function PropertyModal({ existing, onSave, onClose }) {
   const parseAddress = (addr) => {
     if (!addr) return { line1:"", street:"", county:"", city:"", postcode:"" };
     const parts = addr.split(",").map(s=>s.trim());
-    // Detect postcode by UK postcode pattern
-    const postcodeRegex = /^[A-Z]{1,2}[0-9][0-9A-Z]?\s*[0-9][A-Z]{2}$/i;
-    const postcodeIdx = parts.findIndex(p => postcodeRegex.test(p.trim()));
-    if (postcodeIdx !== -1) {
-      const postcode = parts[postcodeIdx];
-      const rest = parts.filter((_, i) => i !== postcodeIdx);
-      return { line1:rest[0]||"", street:rest[1]||"", county:rest[2]||"", city:rest[3]||"", postcode };
-    }
-    return { line1:parts[0]||"", street:parts[1]||"", county:parts[2]||"", city:parts[3]||"", postcode:parts[4]||"" };
+    // Always treat last part as postcode, second to last as city
+    return { 
+      line1:parts[0]||"", 
+      street:parts[1]||"", 
+      county:parts[2]||"", 
+      city:parts[3]||"", 
+      postcode:parts[parts.length-1]||"" 
+    };
   };
   const existingAddr = parseAddress(existing?.address);
   const [name, setName]       = useState(existing?.name||"");
