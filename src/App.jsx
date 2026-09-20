@@ -2747,20 +2747,31 @@ export default function RoomWorthApp() {
   const loadProperties = async (userId) => {
     setDbLoading(true);
     try {
-      const { data: props, error } = await supabase
-        .from("properties").select("*").eq("user_id", userId).order("created_at", { ascending: true });
+      // Fetch all data in 3 parallel queries instead of cascading calls
+      const [{ data: props, error }, { data: allRooms }, { data: allItems }] = await Promise.all([
+        supabase.from("properties").select("*").eq("user_id", userId).order("created_at", { ascending: true }),
+        supabase.from("rooms").select("*").in("property_id", 
+          (await supabase.from("properties").select("id").eq("user_id", userId)).data?.map(p => p.id) || []
+        ).order("created_at", { ascending: true }),
+        supabase.from("items").select("*").in("room_id",
+          (await supabase.from("rooms").select("id").in("property_id",
+            (await supabase.from("properties").select("id").eq("user_id", userId)).data?.map(p => p.id) || []
+          )).data?.map(r => r.id) || []
+        ).order("created_at", { ascending: true })
+      ]);
       if (error) throw error;
-      const fullProps = await Promise.all((props || []).map(async (p) => {
-        const { data: rooms } = await supabase
-          .from("rooms").select("*").eq("property_id", p.id).order("created_at", { ascending: true });
-        const fullRooms = await Promise.all((rooms || []).map(async (r) => {
-          const { data: items } = await supabase
-            .from("items").select("*").eq("room_id", r.id).order("created_at", { ascending: true });
-          return { ...r, id: r.id, items: (items || []).map(i => ({...i, qty: i.qty||1, value: i.value||0})) };
-        }));
+
+      // Assemble the data structure in memory — no more network round trips
+      const fullProps = (props || []).map(p => {
+        const propRooms = (allRooms || []).filter(r => r.property_id === p.id);
+        const fullRooms = propRooms.map(r => {
+          const roomItems = (allItems || []).filter(i => i.room_id === r.id)
+            .map(i => ({...i, qty: i.qty||1, value: i.value||0}));
+          return { ...r, id: r.id, items: roomItems };
+        });
         const currentContents = fullRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0);
         return { ...p, id: p.id, rooms: fullRooms, currentContents, recommendedContents: p.recommended_contents, rebuildValue: p.rebuild_value, photo: p.photo || null };
-      }));
+      });
       setProperties(fullProps);
     } catch(e) { console.error("Load error:", e); }
     finally { setDbLoading(false); }
