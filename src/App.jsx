@@ -2747,30 +2747,28 @@ export default function RoomWorthApp() {
   const loadProperties = async (userId) => {
     setDbLoading(true);
     try {
-      // Step 1: fetch properties
+      // Single query using Supabase nested selects
       const { data: props, error } = await supabase
-        .from("properties").select("*").eq("user_id", userId).order("created_at", { ascending: true });
+        .from("properties")
+        .select(`
+          *,
+          rooms (
+            *,
+            items (*)
+          )
+        `)
+        .eq("user_id", userId)
+        .order("created_at", { ascending: true });
+
       if (error) throw error;
       if (!props || props.length === 0) { setProperties([]); return; }
 
-      const propIds = props.map(p => p.id);
-
-      // Step 2: fetch all rooms and items in parallel (2 queries total, not N*M)
-      const [{ data: allRooms }, { data: allItems }] = await Promise.all([
-        supabase.from("rooms").select("*").in("property_id", propIds).order("created_at", { ascending: true }),
-        supabase.from("items").select("*").in("room_id",
-          (await supabase.from("rooms").select("id").in("property_id", propIds)).data?.map(r => r.id) || []
-        ).order("created_at", { ascending: true })
-      ]);
-
-      // Step 3: assemble in memory
       const fullProps = props.map(p => {
-        const propRooms = (allRooms || []).filter(r => r.property_id === p.id);
-        const fullRooms = propRooms.map(r => {
-          const roomItems = (allItems || []).filter(i => i.room_id === r.id)
-            .map(i => ({...i, qty: i.qty||1, value: i.value||0}));
-          return { ...r, id: r.id, items: roomItems };
-        });
+        const fullRooms = (p.rooms || []).map(r => ({
+          ...r,
+          id: r.id,
+          items: (r.items || []).map(i => ({...i, qty: i.qty||1, value: i.value||0}))
+        }));
         const currentContents = fullRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0);
         return { ...p, id: p.id, rooms: fullRooms, currentContents, recommendedContents: p.recommended_contents, rebuildValue: p.rebuild_value, photo: p.photo || null };
       });
