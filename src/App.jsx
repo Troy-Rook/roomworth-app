@@ -2768,19 +2768,20 @@ export default function RoomWorthApp() {
   const loadProperties = async (userId) => {
     setDbLoading(true);
     try {
-      const { data, error } = await supabase.rpc("get_user_properties", { p_user_id: userId });
+      const { data: props, error } = await supabase
+        .from("properties").select("*").eq("user_id", userId).order("created_at", { ascending: true });
       if (error) throw error;
-      
-      const props = data || [];
-      const fullProps = props.map(p => {
-        const fullRooms = (p.rooms || []).map(r => ({
-          ...r,
-          id: r.id,
-          items: (r.items || []).map(i => ({...i, qty: i.qty||1, value: i.value||0}))
+      const fullProps = await Promise.all((props || []).map(async (p) => {
+        const { data: rooms } = await supabase
+          .from("rooms").select("*").eq("property_id", p.id).order("created_at", { ascending: true });
+        const fullRooms = await Promise.all((rooms || []).map(async (r) => {
+          const { data: items } = await supabase
+            .from("items").select("*").eq("room_id", r.id).order("created_at", { ascending: true });
+          return { ...r, id: r.id, items: (items || []).map(i => ({...i, qty: i.qty||1, value: i.value||0})) };
         }));
         const currentContents = fullRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0);
         return { ...p, id: p.id, rooms: fullRooms, currentContents, recommendedContents: p.recommended_contents, rebuildValue: p.rebuild_value, photo: p.photo || null };
-      });
+      }));
       setProperties(fullProps);
     } catch(e) { console.error("Load error:", e); }
     finally { setDbLoading(false); }
@@ -2989,6 +2990,14 @@ export default function RoomWorthApp() {
           <Logo size={52} />
           <div style={{ color:"white", fontWeight:900, fontSize:22, marginTop:16, marginBottom:8 }}>Processing payment...</div>
           <div style={{ color:"rgba(255,255,255,0.7)", fontSize:14, marginBottom:24 }}>Setting up your account</div>
+          <div style={{ width:48, height:48, border:"4px solid rgba(255,255,255,0.2)", borderTopColor:"#4AABBF", borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/>
+        </div>
+      )}
+      {dbLoading && !paymentProcessing && (
+        <div style={{ position:"fixed", inset:0, background:"linear-gradient(160deg,#0f1e3d,#1B3A6B)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", zIndex:998 }}>
+          <Logo size={52} />
+          <div style={{ color:"white", fontWeight:900, fontSize:22, marginTop:16, marginBottom:8 }}>Loading your properties...</div>
+          <div style={{ color:"rgba(255,255,255,0.7)", fontSize:14, marginBottom:24 }}>Please wait a moment</div>
           <div style={{ width:48, height:48, border:"4px solid rgba(255,255,255,0.2)", borderTopColor:"#4AABBF", borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/>
         </div>
       )}
