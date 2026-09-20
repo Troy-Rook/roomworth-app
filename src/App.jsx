@@ -1022,6 +1022,7 @@ function PropertyModal({ existing, onSave, onClose }) {
       recommendedContents: Math.round(rebuildNum*0.1),
       currentContents: existing?.currentContents||0,
       rooms: existing?.rooms || DEFAULT_ROOMS.map(r=>({...r, id:uid(), items:[]})),
+      photo: existing?.photo || null,
     });
   };
 
@@ -2860,7 +2861,8 @@ export default function RoomWorthApp() {
       try {
         await supabase.from("properties").update({
           name: updated.name, address: updated.address,
-          rebuild_value: updated.rebuildValue, recommended_contents: updated.recommendedContents
+          rebuild_value: updated.rebuildValue, recommended_contents: updated.recommendedContents,
+          photo: updated.photo || null
         }).eq("id", updated.id);
       } catch(e) { console.error("Update property error:", e); }
     }
