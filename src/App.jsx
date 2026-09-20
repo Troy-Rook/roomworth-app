@@ -2747,27 +2747,32 @@ export default function RoomWorthApp() {
   const loadProperties = async (userId) => {
     setDbLoading(true);
     try {
-      // Single query using Supabase nested selects
+      // Fetch properties first
       const { data: props, error } = await supabase
-        .from("properties")
-        .select(`
-          *,
-          rooms (
-            *,
-            items (*)
-          )
-        `)
-        .eq("user_id", userId)
-        .order("created_at", { ascending: true });
-
+        .from("properties").select("*").eq("user_id", userId).order("created_at", { ascending: true });
       if (error) throw error;
       if (!props || props.length === 0) { setProperties([]); return; }
 
+      const propIds = props.map(p => p.id);
+
+      // Fetch all rooms for these properties in one query
+      const { data: allRooms } = await supabase
+        .from("rooms").select("*").in("property_id", propIds).order("created_at", { ascending: true });
+
+      const roomIds = (allRooms || []).map(r => r.id);
+
+      // Fetch all items for these rooms in one query
+      const { data: allItems } = await supabase
+        .from("items").select("*").in("room_id", roomIds).order("created_at", { ascending: true });
+
+      // Assemble in memory - no more network calls
       const fullProps = props.map(p => {
-        const fullRooms = (p.rooms || []).map(r => ({
+        const propRooms = (allRooms || []).filter(r => r.property_id === p.id);
+        const fullRooms = propRooms.map(r => ({
           ...r,
           id: r.id,
-          items: (r.items || []).map(i => ({...i, qty: i.qty||1, value: i.value||0}))
+          items: (allItems || []).filter(i => i.room_id === r.id)
+            .map(i => ({...i, qty: i.qty||1, value: i.value||0}))
         }));
         const currentContents = fullRooms.reduce((s,r)=>s+r.items.filter(i=>!i.specialist).reduce((rs,i)=>rs+(i.override_value||i.value)*i.qty,0),0);
         return { ...p, id: p.id, rooms: fullRooms, currentContents, recommendedContents: p.recommended_contents, rebuildValue: p.rebuild_value, photo: p.photo || null };
